@@ -1,0 +1,13 @@
+{
+  "git_rev": "unknown",
+  "object_store_root": "/Users/duncanbraakhekke/Documents/School/master-software/View_Shot_Vision/open_robo_vision/data/object_store",
+  "chroma_path": "/Users/duncanbraakhekke/Documents/School/master-software/View_Shot_Vision/open_robo_vision/data/chroma_db",
+  "collection_name": "owl_gt_embeddings",
+  "chroma_collection_count": 0,
+  "images_processed": 0,
+  "embeddings_written": 0,
+  "images_skipped": 0,
+  "elapsed_s": 0.097,
+  "errors": [],
+  "error_count": 0
+}

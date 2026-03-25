@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLOps Pipeline - Fleet Knowledge Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #e9f0f8;
+    --panel: rgba(250, 252, 255, 0.9);
+    --ink: #172033;
+    --muted: #667085;
+    --line: #607086;
+    --blue-50: #eaf3ff;
+    --blue-100: #dbeafe;
+    --blue-300: #8cb9ff;
+    --blue-600: #2563eb;
+    --green-50: #edf9ef;
+    --green-600: #16a34a;
+    --amber-50: #fff5e8;
+    --amber-600: #d97706;
+    --gray-50: #f5f7fa;
+    --gray-200: #d6deea;
+    --gray-400: #8b97a8;
+    --gray-600: #475467;
+    --shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at left top, rgba(37, 99, 235, 0.12), transparent 24%),
+      radial-gradient(circle at 85% 10%, rgba(22, 163, 74, 0.10), transparent 20%),
+      linear-gradient(180deg, #eef4fb 0%, #e6edf6 100%);
+  }
+
+  .page {
+    max-width: 1760px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 23px;
+    letter-spacing: -0.02em;
+  }
+
+  .sub {
+    margin: 8px 0 18px;
+    max-width: 1200px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .panel {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 26px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .note {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+    padding: 14px 16px;
+  }
+
+  .note h3 {
+    margin: 0 0 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .note p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  @media (max-width: 1080px) {
+    .notes { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>MLOps Pipeline - Pretrained Vision + Fleet Knowledge Sync</h1>
+  <p class="sub">
+    New target architecture for an image-only pretrained detector running on a live camera feed. The model stays frozen, embeddings remain preloadable, unknown objects are labeled by the operator in the UI, and validated knowledge is synchronized across devices through a fleet-level MLOps control plane.
+  </p>
+
+  <div class="panel">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1180" aria-labelledby="title desc" role="img">
+      <title id="title">Fleet-aware MLOps pipeline for pretrained object detection</title>
+      <desc id="desc">A swim-lane MLOps architecture showing buffered camera inference, operator labeling of unknown objects, preloaded embeddings, fleet sync, data lake integration, data versioning, orchestration, feature stores, experiment tracking, model registry, upstream model training pipelines, and monitoring feedback loops.</desc>
+
+      <defs>
+        <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%">
+          <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+        </filter>
+        <marker id="arrow" markerWidth="12" markerHeight="12" refX="9.2" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L12,6 L0,12 z" fill="#607086" />
+        </marker>
+        <marker id="arrowBlue" markerWidth="12" markerHeight="12" refX="9.2" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L12,6 L0,12 z" fill="#2563eb" />
+        </marker>
+        <marker id="arrowGreen" markerWidth="12" markerHeight="12" refX="9.2" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L12,6 L0,12 z" fill="#16a34a" />
+        </marker>
+        <marker id="arrowAmber" markerWidth="12" markerHeight="12" refX="9.2" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L12,6 L0,12 z" fill="#d97706" />
+        </marker>
+      </defs>
+
+      <rect x="0" y="0" width="1680" height="1180" fill="#f9fbff" />
+
+      <text x="34" y="42" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#475467">Reference shape language: Google-style MLOps lanes with shared stores and control-plane services</text>
+      <text x="34" y="61" font-size="11.5" fill="#667085">Normal operations update knowledge, not the frozen pretrained model. The model training pipeline remains an upstream managed capability for replacing the foundation model when needed.</text>
+
+      <g transform="translate(1280 20)" filter="url(#shadow)">
+        <rect x="0" y="0" width="360" height="58" rx="16" fill="#ffffff" stroke="#d6deea" />
+        <rect x="20" y="16" width="14" height="10" rx="3" fill="#16a34a" />
+        <text x="42" y="25" font-size="11" fill="#334155">Runtime or retained component</text>
+        <rect x="176" y="16" width="14" height="10" rx="3" fill="#d97706" />
+        <text x="198" y="25" font-size="11" fill="#334155">Human validation step</text>
+        <rect x="20" y="36" width="14" height="10" rx="3" fill="#2563eb" />
+        <text x="42" y="45" font-size="11" fill="#334155">New platform service</text>
+        <line x1="218" y1="42" x2="254" y2="42" stroke="#607086" stroke-width="1.8" marker-end="url(#arrow)" />
+        <text x="266" y="46" font-size="11" fill="#334155">data/control flow</text>
+      </g>
+
+      <g>
+        <rect x="184" y="112" width="1290" height="140" rx="22" fill="#dcecff" stroke="#2563eb" stroke-width="2.6" />
+        <rect x="184" y="274" width="1290" height="130" rx="22" fill="#fff5e8" stroke="#d97706" stroke-width="2.1" stroke-dasharray="10 8" />
+        <rect x="184" y="426" width="1290" height="212" rx="22" fill="#eaf3ff" stroke="#8cb9ff" stroke-width="2.1" stroke-dasharray="10 8" />
+        <rect x="184" y="660" width="1290" height="138" rx="22" fill="#edf9ef" stroke="#16a34a" stroke-width="2.1" stroke-dasharray="10 8" />
+        <rect x="184" y="822" width="1290" height="148" rx="22" fill="#f5f7fa" stroke="#8b97a8" stroke-width="2.1" stroke-dasharray="10 8" />
+
+        <text x="208" y="138" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" fill="#1657b8">Lane 1 - Edge Serving Runtime</text>
+        <text x="208" y="156" font-size="11.5" fill="#43638b">Live camera feed is buffered into image frames, then served by the frozen pretrained vision model with preloaded embeddings.</text>
+
+        <text x="208" y="300" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" fill="#9a5d08">Lane 2 - Operator Labeling UI</text>
+        <text x="208" y="318" font-size="11.5" fill="#94672d">Unknown or low-confidence detections are manually labeled without pausing the inference loop.</text>
+
+        <text x="208" y="452" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" fill="#315b95">Lane 3 - Shared MLOps Control Plane</text>
+        <text x="208" y="470" font-size="11.5" fill="#59708d">Central services for data lake integration, orchestration, data management, feature stores, experiment tracking, fleet sync, registry, and observability.</text>
+
+        <text x="208" y="686" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" fill="#166534">Lane 4 - Knowledge Packaging and Promotion</text>
+        <text x="208" y="704" font-size="11.5" fill="#3d7851">Promote validated embeddings and metadata as versioned knowledge packs. No routine backbone retraining is required here.</text>
+
+        <text x="208" y="848" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="700" fill="#475467">Lane 5 - Upstream Foundation Model Lifecycle</text>
+        <text x="208" y="866" font-size="11.5" fill="#667085">Standard MLOps training and model registry remain upstream to manage new pretrained releases, not day-to-day robot learning.</text>
+      </g>
+
+      <g filter="url(#shadow)">
+        <rect x="30" y="154" width="118" height="522" rx="16" fill="#eef1f5" stroke="#7b8797" stroke-width="2" />
+        <ellipse cx="89" cy="154" rx="59" ry="13" fill="#f7f9fb" stroke="#7b8797" stroke-width="2" />
+        <ellipse cx="89" cy="676" rx="59" ry="13" fill="#d9e0e8" stroke="#7b8797" stroke-width="2" />
+        <text x="89" y="190" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#374151">Feature Store</text>
+        <text x="89" y="206" text-anchor="middle" font-size="10" fill="#667085">Embedding Store</text>
+        <text x="89" y="222" text-anchor="middle" font-size="10" fill="#667085">device cache</text>
+        <line x1="46" y1="248" x2="132" y2="248" stroke="#c4ccd7" stroke-width="1" />
+        <text x="89" y="268" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#4b5563">PRESERVED</text>
+        <text x="89" y="288" text-anchor="middle" font-size="10" fill="#4b5563">preload embeddings on boot</text>
+        <text x="89" y="306" text-anchor="middle" font-size="10" fill="#4b5563">write new labels locally</text>
+        <line x1="46" y1="336" x2="132" y2="336" stroke="#c4ccd7" stroke-width="1" />
+        <text x="89" y="356" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#4b5563">READS</text>
+        <text x="89" y="376" text-anchor="middle" font-size="10" fill="#4b5563">edge lookup</text>
+        <text x="89" y="394" text-anchor="middle" font-size="10" fill="#4b5563">operator autocomplete</text>
+        <line x1="46" y1="424" x2="132" y2="424" stroke="#c4ccd7" stroke-width="1" />
+        <text x="89" y="444" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#4b5563">WRITES</text>
+        <text x="89" y="464" text-anchor="middle" font-size="10" fill="#4b5563">bootstrap import</text>
+        <text x="89" y="482" text-anchor="middle" font-size="10" fill="#4b5563">manual label update</text>
+        <text x="89" y="500" text-anchor="middle" font-size="10" fill="#4b5563">fleet sync apply</text>
+      </g>
+
+      <g filter="url(#shadow)">
+        <rect x="34" y="106" width="110" height="34" rx="10" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="89" y="127" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#166534">Preload JSON</text>
+        <rect x="34" y="694" width="110" height="34" rx="10" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="89" y="715" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Fleet Sync Pull</text>
+      </g>
+      <line x1="89" y1="140" x2="89" y2="142" stroke="#16a34a" stroke-width="2.2" marker-end="url(#arrowGreen)" />
+      <line x1="89" y1="694" x2="89" y2="686" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)" />
+
+      <g filter="url(#shadow)">
+        <rect x="218" y="172" width="128" height="44" rx="12" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="282" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#166534">Live Camera Feed</text>
+        <text x="282" y="203" text-anchor="middle" font-size="10" fill="#166534">ROS2 / RTSP / USB</text>
+
+        <rect x="366" y="172" width="142" height="44" rx="12" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="437" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Video Buffer</text>
+        <text x="437" y="203" text-anchor="middle" font-size="10" fill="#1d4ed8">ring buffer + timestamps</text>
+
+        <rect x="528" y="172" width="144" height="44" rx="12" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="600" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Frame Sampler</text>
+        <text x="600" y="203" text-anchor="middle" font-size="10" fill="#1d4ed8">video to image batches</text>
+
+        <rect x="692" y="172" width="148" height="44" rx="12" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="766" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#166534">Preprocess Frames</text>
+        <text x="766" y="203" text-anchor="middle" font-size="10" fill="#166534">resize normalize crop</text>
+
+        <rect x="860" y="172" width="166" height="44" rx="12" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="943" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#166534">Pretrained Vision Model</text>
+        <text x="943" y="203" text-anchor="middle" font-size="10" fill="#166534">frozen, image-only, no retrain</text>
+
+        <rect x="1046" y="172" width="150" height="44" rx="12" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="1121" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Embedding Lookup</text>
+        <text x="1121" y="203" text-anchor="middle" font-size="10" fill="#1d4ed8">nearest class features</text>
+
+        <rect x="1216" y="172" width="122" height="44" rx="12" fill="#fff5e8" stroke="#d97706" stroke-width="2" />
+        <text x="1277" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#9a5d08">Confidence Gate</text>
+        <text x="1277" y="203" text-anchor="middle" font-size="10" fill="#9a5d08">known vs unknown</text>
+
+        <rect x="1358" y="172" width="96" height="44" rx="12" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="1406" y="189" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#166534">UI Output</text>
+        <text x="1406" y="203" text-anchor="middle" font-size="10" fill="#166534">box + class</text>
+      </g>
+
+      <line x1="346" y1="194" x2="366" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="508" y1="194" x2="528" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="672" y1="194" x2="692" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="840" y1="194" x2="860" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1026" y1="194" x2="1046" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1196" y1="194" x2="1216" y2="194" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1338" y1="194" x2="1358" y2="194" stroke="#16a34a" stroke-width="2.2" marker-end="url(#arrowGreen)" />
+
+      <path d="M148,386 L176,386 L176,194 L1046,194" fill="none" stroke="#2563eb" stroke-width="2.4" marker-end="url(#arrowBlue)" />
+      <text x="632" y="181" font-size="10.5" fill="#1d4ed8">preserved embedding preload feeds edge lookup</text>
+
+      <g filter="url(#shadow)">
+        <rect x="310" y="318" width="168" height="44" rx="12" fill="#fff5e8" stroke="#d97706" stroke-width="2" />
+        <text x="394" y="335" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#9a5d08">Unknown Review Queue</text>
+        <text x="394" y="349" text-anchor="middle" font-size="10" fill="#9a5d08">cropped object thumbnails</text>
+
+        <rect x="500" y="318" width="142" height="44" rx="12" fill="#fff5e8" stroke="#d97706" stroke-width="2" />
+        <text x="571" y="335" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#9a5d08">Operator Preview</text>
+        <text x="571" y="349" text-anchor="middle" font-size="10" fill="#9a5d08">bbox + frame context</text>
+
+        <rect x="664" y="318" width="154" height="44" rx="12" fill="#fff5e8" stroke="#d97706" stroke-width="2" />
+        <text x="741" y="335" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#9a5d08">Manual Label Input</text>
+        <text x="741" y="349" text-anchor="middle" font-size="10" fill="#9a5d08">select or create class</text>
+
+        <rect x="840" y="318" width="166" height="44" rx="12" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="923" y="335" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Write Label + Embedding</text>
+        <text x="923" y="349" text-anchor="middle" font-size="10" fill="#1d4ed8">local knowledge update</text>
+
+        <rect x="1028" y="318" width="172" height="44" rx="12" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="1114" y="335" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#1d4ed8">Annotation Event Log</text>
+        <text x="1114" y="349" text-anchor="middle" font-size="10" fill="#1d4ed8">audit trail + operator id</text>
+      </g>
+
+      <path d="M1277,216 L1277,244 L394,244 L394,318" fill="none" stroke="#d97706" stroke-width="2.3" marker-end="url(#arrowAmber)" />
+      <text x="1158" y="236" font-size="10.5" fill="#9a5d08">unknown or low confidence</text>
+      <line x1="478" y1="340" x2="500" y2="340" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="642" y1="340" x2="664" y2="340" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="818" y1="340" x2="840" y2="340" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1006" y1="340" x2="1028" y2="340" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+
+      <path d="M923,362 L923,392 L176,392 L176,476 L148,476" fill="none" stroke="#d97706" stroke-width="2.4" marker-end="url(#arrowAmber)" />
+      <text x="666" y="409" font-size="10.5" fill="#9a5d08">manual labels update the local feature store immediately</text>
+
+      <g filter="url(#shadow)">
+        <rect x="220" y="504" width="182" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="311" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Data Lake Integration</text>
+        <text x="311" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">frames, crops, labels, logs, sync deltas</text>
+
+        <rect x="422" y="504" width="192" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="518" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Data Versioning and Management</text>
+        <text x="518" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">quality checks, lineage, label versions</text>
+
+        <rect x="634" y="504" width="162" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="715" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Data Orchestration</text>
+        <text x="715" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">ETL, validation, sync jobs</text>
+
+        <rect x="816" y="504" width="162" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="897" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Feature Stores</text>
+        <text x="897" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">global embedding store</text>
+
+        <rect x="998" y="504" width="168" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="1082" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Experiment Tracking</text>
+        <text x="1082" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">thresholds, eval sets, releases</text>
+
+        <rect x="1186" y="504" width="162" height="52" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="1267" y="525" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Fleet Sync Hub</text>
+        <text x="1267" y="541" text-anchor="middle" font-size="10.5" fill="#1d4ed8">share knowledge across devices</text>
+      </g>
+
+      <g filter="url(#shadow)">
+        <rect x="292" y="578" width="196" height="42" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="390" y="604" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Monitoring and Feedback Loops</text>
+
+        <rect x="514" y="578" width="164" height="42" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="596" y="604" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Drift + Unknown Rate</text>
+
+        <rect x="704" y="578" width="150" height="42" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="779" y="604" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Label Quality KPIs</text>
+
+        <rect x="880" y="578" width="154" height="42" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="957" y="604" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Fleet Health Metrics</text>
+
+        <rect x="1060" y="578" width="166" height="42" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="1143" y="604" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Release Approval Queue</text>
+      </g>
+
+      <line x1="402" y1="530" x2="422" y2="530" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="614" y1="530" x2="634" y2="530" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="796" y1="530" x2="816" y2="530" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="978" y1="530" x2="998" y2="530" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1166" y1="530" x2="1186" y2="530" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+
+      <path d="M1114,362 L1114,468 L311,468 L311,504" fill="none" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrowBlue)" />
+      <text x="996" y="452" font-size="10.5" fill="#1d4ed8">annotation events land in the data lake</text>
+
+      <path d="M1406,216 L1406,452 L390,452 L390,578" fill="none" stroke="#16a34a" stroke-width="2.1" marker-end="url(#arrowGreen)" />
+      <text x="1216" y="438" font-size="10.5" fill="#166534">runtime metrics feed monitoring</text>
+
+      <path d="M1348,530 L1398,530 L1398,716 L148,716" fill="none" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrowBlue)" />
+      <text x="1390" y="688" font-size="10.5" fill="#1d4ed8">approved fleet delta</text>
+
+      <g filter="url(#shadow)">
+        <rect x="294" y="708" width="182" height="48" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="385" y="728" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Knowledge Packaging Pipeline</text>
+        <text x="385" y="744" text-anchor="middle" font-size="10.5" fill="#1d4ed8">bundle embeddings, labels, metadata</text>
+
+        <rect x="500" y="708" width="166" height="48" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="583" y="728" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Validation Suite</text>
+        <text x="583" y="744" text-anchor="middle" font-size="10.5" fill="#1d4ed8">holdout checks + label sanity</text>
+
+        <rect x="690" y="708" width="178" height="48" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="779" y="728" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Versioned Knowledge Release</text>
+        <text x="779" y="744" text-anchor="middle" font-size="10.5" fill="#1d4ed8">semantic version + rollback</text>
+
+        <rect x="892" y="708" width="160" height="48" rx="14" fill="#eaf3ff" stroke="#2563eb" stroke-width="2" />
+        <text x="972" y="728" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#1d4ed8">Model Registry</text>
+        <text x="972" y="744" text-anchor="middle" font-size="10.5" fill="#1d4ed8">knowledge packs + configs</text>
+
+        <rect x="1076" y="708" width="178" height="48" rx="14" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="1165" y="728" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#166534">Fleet Sync Publish</text>
+        <text x="1165" y="744" text-anchor="middle" font-size="10.5" fill="#166534">push to all subscribed devices</text>
+      </g>
+
+      <line x1="476" y1="732" x2="500" y2="732" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="666" y1="732" x2="690" y2="732" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="868" y1="732" x2="892" y2="732" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="1052" y1="732" x2="1076" y2="732" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+
+      <path d="M897,556 L897,708" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#arrowBlue)" />
+      <text x="906" y="644" font-size="10.5" fill="#1d4ed8">feature store snapshot</text>
+
+      <path d="M1143,620 L1143,690 L583,690 L583,708" fill="none" stroke="#607086" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrow)" />
+      <text x="922" y="682" font-size="10.5" fill="#667085">approval and monitoring gates release</text>
+
+      <g filter="url(#shadow)">
+        <rect x="288" y="876" width="188" height="48" rx="14" fill="#f5f7fa" stroke="#8b97a8" stroke-width="2" />
+        <text x="382" y="896" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#475467">Model Training Pipelines</text>
+        <text x="382" y="912" text-anchor="middle" font-size="10.5" fill="#475467">upstream foundation-model lifecycle</text>
+
+        <rect x="504" y="876" width="160" height="48" rx="14" fill="#f5f7fa" stroke="#8b97a8" stroke-width="2" />
+        <text x="584" y="896" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#475467">Evaluation Bench</text>
+        <text x="584" y="912" text-anchor="middle" font-size="10.5" fill="#475467">device acceptance tests</text>
+
+        <rect x="692" y="876" width="168" height="48" rx="14" fill="#f5f7fa" stroke="#8b97a8" stroke-width="2" />
+        <text x="776" y="896" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#475467">Foundation Registry</text>
+        <text x="776" y="912" text-anchor="middle" font-size="10.5" fill="#475467">approved pretrained weights</text>
+
+        <rect x="888" y="876" width="176" height="48" rx="14" fill="#edf9ef" stroke="#16a34a" stroke-width="2" />
+        <text x="976" y="896" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#166534">Frozen Model Release</text>
+        <text x="976" y="912" text-anchor="middle" font-size="10.5" fill="#166534">rare backbone replacement</text>
+
+        <rect x="1092" y="876" width="170" height="48" rx="14" fill="#ffffff" stroke="#94a3b8" stroke-width="1.8" />
+        <text x="1177" y="896" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#334155">Experiment History Link</text>
+        <text x="1177" y="912" text-anchor="middle" font-size="10.5" fill="#334155">full lineage to releases</text>
+      </g>
+
+      <line x1="476" y1="900" x2="504" y2="900" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="664" y1="900" x2="692" y2="900" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+      <line x1="860" y1="900" x2="888" y2="900" stroke="#607086" stroke-width="2" marker-end="url(#arrow)" />
+
+      <path d="M976,924 L976,952 L943,952 L943,216" fill="none" stroke="#16a34a" stroke-width="2.3" marker-end="url(#arrowGreen)" />
+      <text x="987" y="946" font-size="10.5" fill="#166534">only when a new pretrained release is approved</text>
+
+      <path d="M1082,556 L1082,876" fill="none" stroke="#607086" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrow)" />
+      <text x="1091" y="720" font-size="10.5" fill="#667085">tracked thresholds and evaluations</text>
+
+      <g filter="url(#shadow)">
+        <rect x="28" y="996" width="1620" height="154" rx="24" fill="#f3f7fc" stroke="#d6deea" stroke-width="1.5" />
+        <text x="54" y="1022" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700" fill="#334155">MLOps Standards Covered</text>
+        <text x="54" y="1040" font-size="10.5" fill="#64748b">All requested components are explicitly represented, while keeping the robot on a frozen pretrained model during normal operations.</text>
+
+        <rect x="54" y="1052" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="70" y="1071" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Data Lake Integration</text>
+        <text x="212" y="1071" font-size="10" fill="#64748b">raw frames, crops, logs, labels</text>
+
+        <rect x="382" y="1052" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="398" y="1071" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Data Versioning and Management</text>
+        <text x="612" y="1071" font-size="10" fill="#64748b">quality, lineage, rollback</text>
+
+        <rect x="710" y="1052" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="726" y="1071" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Data Orchestration</text>
+        <text x="850" y="1071" font-size="10" fill="#64748b">ETL, validation, sync scheduling</text>
+
+        <rect x="1038" y="1052" width="282" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="1054" y="1071" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Feature Stores</text>
+        <text x="1146" y="1071" font-size="10" fill="#64748b">local and fleet embedding state</text>
+
+        <rect x="1338" y="1052" width="282" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="1354" y="1071" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Experiment Tracking</text>
+        <text x="1486" y="1071" font-size="10" fill="#64748b">thresholds, validations, releases</text>
+
+        <rect x="54" y="1094" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="70" y="1113" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Model Training Pipelines</text>
+        <text x="210" y="1113" font-size="10" fill="#64748b">upstream only for new foundation models</text>
+
+        <rect x="382" y="1094" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="398" y="1113" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Model Registry</text>
+        <text x="500" y="1113" font-size="10" fill="#64748b">knowledge packs and pretrained releases</text>
+
+        <rect x="710" y="1094" width="310" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="726" y="1113" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Monitoring and Feedback Loops</text>
+        <text x="942" y="1113" font-size="10" fill="#64748b">drift, unknown rate, label quality, approvals</text>
+
+        <rect x="1038" y="1094" width="282" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="1054" y="1113" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Buffered Video Inference</text>
+        <text x="1200" y="1113" font-size="10" fill="#64748b">image-only model on live feed</text>
+
+        <rect x="1338" y="1094" width="282" height="32" rx="12" fill="#ffffff" stroke="#d6deea" />
+        <text x="1354" y="1113" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="700" fill="#334155">Fleet Sync</text>
+        <text x="1436" y="1113" font-size="10" fill="#64748b">knowledge shared across devices</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="notes" aria-label="Design rationale">
+    <div class="note">
+      <h3>Frozen pretrained model</h3>
+      <p>The production robot does not retrain the backbone. Day-to-day learning happens by updating embeddings, labels, thresholds, and knowledge-pack metadata around the frozen model.</p>
+    </div>
+    <div class="note">
+      <h3>Buffered video to image inference</h3>
+      <p>The camera feed is buffered and sampled into still frames because the deployed model processes images, not native video streams.</p>
+    </div>
+    <div class="note">
+      <h3>Operator in the loop</h3>
+      <p>Unknown detections are routed into a manual labeling queue in the UI so new objects become curated data instead of silent model errors.</p>
+    </div>
+    <div class="note">
+      <h3>Embedding preload stays</h3>
+      <p>Boot-time preload of saved embeddings remains part of the architecture, giving each device immediate known-object capability before any new session data is collected.</p>
+    </div>
+    <div class="note">
+      <h3>Fleet-wide knowledge sync</h3>
+      <p>Validated labels and embeddings are promoted as versioned knowledge releases and synchronized across devices through the fleet sync hub.</p>
+    </div>
+    <div class="note">
+      <h3>MLOps-complete without forced retraining</h3>
+      <p>The required MLOps building blocks are still present: data lake, versioning, orchestration, feature stores, experiment tracking, registries, and monitoring, while full model training is pushed upstream.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

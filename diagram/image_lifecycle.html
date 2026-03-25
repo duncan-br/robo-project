@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OWL-ViT v2 — Full Image Lifecycle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:#f5f5f0; padding:20px; }
+  h1 { font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:-0.5px; }
+  .sub { font-size:11px; color:#666; margin:4px 0 12px; }
+  svg text { font-family:'Inter',sans-serif; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  .svg-container { width:100%; max-width:1400px; }
+  .svg-container svg { width:100%; height:auto; }
+  .description { max-width:900px; margin:24px 0 32px; padding:20px 24px; background:#fafafa; border:1px solid #e5e5e0; border-radius:10px; font-size:14px; line-height:1.65; color:#333; }
+  .description h2 { font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; margin:0 0 12px; color:#444; }
+  .description p { margin:0 0 12px; }
+  .description p:last-child { margin-bottom:0; }
+  .description strong { color:#1a1a1a; }
+</style>
+</head>
+<body>
+<h1>OWL-ViT v2 — Image Lifecycle Diagram</h1>
+<p class="sub">Full data-flow of an image through the open-vocabulary detection pipeline.</p>
+
+<div class="description">
+<h2>Description: Flow of an Image Through the Pipeline</h2>
+<p><strong>1. Image input.</strong> A raw image enters the system from the UI (file dialog), a ROS2 topic, or a YOLO dataset. It is a pixel array with height, width, and three color channels (e.g. RGB), with values 0–255 per channel.</p>
+<p><strong>2. Preprocessing.</strong> The image is loaded, normalized to the 0–1 range (divided by 255), padded to a square if needed (gray fill), and resized to 960×960 pixels. A batch dimension is added so the model receives a single image of shape 960×960×3 as float32.</p>
+<p><strong>3. Backbone (OWL-ViT v2).</strong> The preprocessed image is fed into the CLIP ViT-B/16 backbone, which splits it into a 60×60 grid of 16×16-pixel patches (3600 patches). Each patch is turned into a 768-dimensional feature vector. The backbone shares its weights for both the main image and any image prompts (reference crops) used to define classes.</p>
+<p><strong>4. Reshape and prediction heads.</strong> The 60×60 feature map is reshaped into 3600 patch vectors (768-dim each). Three heads run in parallel: the <strong>Objectness Predictor</strong> outputs one confidence score per patch (“is there an object here?”); the <strong>Box Predictor</strong> outputs a bounding box (x, y, width, height) per patch; and the <strong>Class Predictor</strong> projects each patch to 512 dimensions and compares it with the current query embeddings (see below) to produce class scores and 512-dim class embeddings per patch.</p>
+<p><strong>5. Query embeddings and the database.</strong> The classes to detect are defined either by text (YAML descriptions turned into 512-dim vectors by the Text Embedder) or by image prompts (reference crops passed through the same backbone and Class Predictor; the 512-dim embedding of each matched object is stored). Stored embeddings live in a database (JSON on disk and an in-memory dict): one or more 512-dim vectors per class. Before each run, a <strong>Merging</strong> step (e.g. average, geometric median, fine-grained, or KNN median) combines stored vectors per class into the “query embeddings” (one 512-dim vector per class) used by the Class Predictor.</p>
+<p><strong>6. Saving to the database.</strong> New 512-dim embeddings are written into the database when: (a) image prompts or annotated images are processed and embeddings are extracted for matched objects; (b) detections are matched to ground-truth labels; (c) wrong predictions are corrected (ACL); or (d) the user manually assigns a class to a detection. This “Save to DB” path is the continual knowledge update: the system keeps appending new vectors per class so future runs use an enriched set of query embeddings.</p>
+<p><strong>7. Outputs and post-processing.</strong> The pipeline outputs class embeddings (one 512-dim vector per detected object), class logits (similarity between each patch and each class), objectness scores (confidence per patch), and predicted bounding boxes. Post-processing keeps only detections above an objectness threshold (e.g. 0.2), maps internal cluster IDs back to class names where needed, and returns the final list of class names, scores, boxes, and embeddings.</p>
+<p>In short: the image is preprocessed to 960×960, converted by the backbone into 3600 patch vectors, then passed through objectness, box, and class heads. Class predictions use query embeddings that come from the database (and from text or image prompts); new embeddings from detections and user feedback are saved back into that database for future runs.</p>
+</div>
+
+<div class="svg-container">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 1080">
+<defs>
+  <marker id="ah" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#333"/></marker>
+  <marker id="ahb" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#2563eb"/></marker>
+  <marker id="ahg" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#16a34a"/></marker>
+  <filter id="sh" x="-3%" y="-3%" width="108%" height="110%">
+    <feDropShadow dx="1" dy="1.5" stdDeviation="1.2" flood-opacity="0.12"/>
+  </filter>
+</defs>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- BACKGROUND REGIONS                                      -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<rect x="8" y="8" width="200" height="860" rx="10" fill="#eae9e5" stroke="#bbb" stroke-width="1"/>
+<text x="20" y="30" class="mono" font-size="12" font-weight="700" fill="#444">Inputs</text>
+
+<rect x="216" y="8" width="750" height="285" rx="10" fill="#d4f5c0" stroke="#7ed957" stroke-width="1.5"/>
+<text x="228" y="30" class="mono" font-size="11" font-weight="700" fill="#2d6b0e">Active &amp; Continual Knowledge Update</text>
+
+<rect x="216" y="302" width="750" height="510" rx="10" fill="#fef3c7" stroke="#d4a72c" stroke-width="1.5"/>
+<text x="228" y="324" class="mono" font-size="11" font-weight="700" fill="#92600a">OWL-ViT v2</text>
+
+<rect x="974" y="8" width="358" height="860" rx="10" fill="#f0efeb" stroke="#bbb" stroke-width="1"/>
+<text x="986" y="30" class="mono" font-size="12" font-weight="700" fill="#444">Outputs</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- INPUT BLOCKS                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- Text Prompts -->
+<rect x="18" y="50" width="180" height="82" rx="7" fill="#fff" stroke="#222" stroke-width="1.8" filter="url(#sh)"/>
+<text x="108" y="72" text-anchor="middle" class="mono" font-size="11" font-weight="700">Text Prompts</text>
+<text x="108" y="90" text-anchor="middle" font-size="9.5" fill="#555">{class1: description1,</text>
+<text x="108" y="103" text-anchor="middle" font-size="9.5" fill="#555">class2: description2, …}</text>
+<text x="108" y="122" text-anchor="middle" font-size="9" fill="#888">loaded from YAML file</text>
+
+<!-- Image Prompts -->
+<rect x="18" y="168" width="180" height="82" rx="7" fill="#fff" stroke="#222" stroke-width="1.8" filter="url(#sh)"/>
+<text x="108" y="190" text-anchor="middle" class="mono" font-size="11" font-weight="700">Image Prompts</text>
+<text x="108" y="208" text-anchor="middle" font-size="9.5" fill="#555">{class1: sample_box 1,</text>
+<text x="108" y="221" text-anchor="middle" font-size="9.5" fill="#555">class1: sample_box 2, …}</text>
+<text x="108" y="242" text-anchor="middle" font-size="9" fill="#888">cropped reference images</text>
+
+<!-- Target Image -->
+<rect x="18" y="450" width="180" height="78" rx="7" fill="#fff" stroke="#222" stroke-width="1.8" filter="url(#sh)"/>
+<text x="108" y="472" text-anchor="middle" class="mono" font-size="11" font-weight="700">Image</text>
+<text x="108" y="490" text-anchor="middle" font-size="9.5" fill="#555">UI file dialog / ROS2 topic /</text>
+<text x="108" y="503" text-anchor="middle" font-size="9.5" fill="#555">YOLO dataset</text>
+<text x="108" y="520" text-anchor="middle" font-size="9" fill="#888">raw pixel image</text>
+
+<!-- Preprocessing -->
+<rect x="18" y="570" width="180" height="100" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="108" y="592" text-anchor="middle" class="mono" font-size="11" font-weight="700" fill="#fff">Preprocessing</text>
+<text x="108" y="610" text-anchor="middle" font-size="9" fill="#bbb">load image → normalize to 0-1</text>
+<text x="108" y="624" text-anchor="middle" font-size="9" fill="#bbb">pad to square → resize to 960×960</text>
+<text x="108" y="652" text-anchor="middle" font-size="9" fill="#f5a623">output: 960×960 pixel image</text>
+<text x="108" y="664" text-anchor="middle" font-size="8" fill="#999">(float32 values, 3 color channels)</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- OWL-ViT v2 MODEL COMPONENTS                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- Text Embedder -->
+<rect x="260" y="340" width="155" height="66" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="337" y="362" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Text Embedder</text>
+<text x="337" y="378" text-anchor="middle" font-size="9" fill="#bbb">CLIP Text Encoder</text>
+<text x="337" y="396" text-anchor="middle" font-size="9" fill="#7ed957">text → 512-dim vector per class</text>
+
+<!-- Backbone (query images) -->
+<rect x="260" y="440" width="155" height="62" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="337" y="460" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Backbone</text>
+<text x="337" y="476" text-anchor="middle" font-size="9" fill="#bbb">CLIP ViT-B/16</text>
+<text x="337" y="494" text-anchor="middle" font-size="9" fill="#7ed957">image → 3600 patch features</text>
+
+<!-- Shared Weights indicator -->
+<line x1="330" y1="507" x2="330" y2="548" stroke="#555" stroke-width="2.5"/>
+<line x1="335" y1="507" x2="335" y2="548" stroke="#555" stroke-width="2.5"/>
+<line x1="340" y1="507" x2="340" y2="548" stroke="#555" stroke-width="2.5"/>
+<line x1="345" y1="507" x2="345" y2="548" stroke="#555" stroke-width="2.5"/>
+<text x="358" y="530" font-size="9" font-weight="600" fill="#555" class="mono">Shared</text>
+<text x="358" y="542" font-size="9" font-weight="600" fill="#555" class="mono">Weights</text>
+
+<!-- Backbone (target) -->
+<rect x="260" y="553" width="155" height="62" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="337" y="573" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Backbone</text>
+<text x="337" y="589" text-anchor="middle" font-size="9" fill="#bbb">CLIP ViT-B/16 (16×16 patches)</text>
+<text x="337" y="607" text-anchor="middle" font-size="9" fill="#7ed957">image → 3600 patch features</text>
+
+<!-- Image Embedder -->
+<rect x="470" y="440" width="155" height="62" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="547" y="460" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Image Embedder</text>
+<text x="547" y="476" text-anchor="middle" font-size="9" fill="#bbb">merge class token (mul-ln)</text>
+<text x="547" y="494" text-anchor="middle" font-size="9" fill="#7ed957">3600 vectors, 768-dim each</text>
+
+<!-- Class Predictor -->
+<rect x="680" y="375" width="155" height="72" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="757" y="395" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Class Predictor</text>
+<text x="757" y="411" text-anchor="middle" font-size="9" fill="#bbb">projects 768-dim → 512-dim</text>
+<text x="757" y="425" text-anchor="middle" font-size="9" fill="#bbb">dot product with queries</text>
+<text x="757" y="441" text-anchor="middle" font-size="9" fill="#7ed957">→ embeddings + class scores</text>
+
+<!-- Objectness Predictor -->
+<rect x="680" y="500" width="155" height="62" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="757" y="520" text-anchor="middle" class="mono" font-size="10" font-weight="700" fill="#fff">Objectness Pred.</text>
+<text x="757" y="536" text-anchor="middle" font-size="9" fill="#bbb">MLP (3 layers) + sigmoid</text>
+<text x="757" y="554" text-anchor="middle" font-size="9" fill="#7ed957">→ 1 confidence score per patch</text>
+
+<!-- Box Predictor -->
+<rect x="680" y="610" width="155" height="72" rx="7" fill="#1a1a1a" stroke="#000" stroke-width="1.8" filter="url(#sh)"/>
+<text x="757" y="630" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#fff">Box Predictor</text>
+<text x="757" y="646" text-anchor="middle" font-size="9" fill="#bbb">MLP + positional bias</text>
+<text x="757" y="676" text-anchor="middle" font-size="9" fill="#7ed957">→ bounding box per patch</text>
+
+<!-- Reshape node (target) -->
+<rect x="470" y="553" width="155" height="62" rx="7" fill="#fff" stroke="#222" stroke-width="1.8" filter="url(#sh)"/>
+<text x="547" y="573" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Reshape</text>
+<text x="547" y="589" text-anchor="middle" font-size="9" fill="#555">60×60 grid → 3600 patches</text>
+<text x="547" y="607" text-anchor="middle" font-size="9" fill="#b35900">3600 vectors, 768-dim each</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- KNOWLEDGE UPDATE (green region)                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- DATABASE CYLINDER -->
+<g transform="translate(410,40)">
+  <rect x="0" y="14" width="200" height="80" rx="4" fill="#fff" stroke="#555" stroke-width="1.8"/>
+  <ellipse cx="100" cy="14" rx="100" ry="14" fill="#fff" stroke="#555" stroke-width="1.8"/>
+  <path d="M 0,94 Q 0,108 100,108 Q 200,108 200,94" fill="none" stroke="#555" stroke-width="1.8"/>
+  <text x="100" y="42" text-anchor="middle" class="mono" font-size="11" font-weight="700">Database</text>
+  <text x="50" y="60" text-anchor="middle" font-size="9" fill="#555">class₁</text>
+  <text x="100" y="60" text-anchor="middle" font-size="9" fill="#555">class₂</text>
+  <text x="155" y="60" text-anchor="middle" font-size="9" fill="#555">class_m</text>
+  <rect x="35" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="50" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="87" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="102" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="140" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="155" y="66" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <text x="135" y="74" text-anchor="middle" font-size="10" fill="#888">…</text>
+  <rect x="35" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="50" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="87" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="102" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="140" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+  <rect x="155" y="82" width="12" height="12" rx="1" fill="#ddd" stroke="#888" stroke-width="0.8"/>
+</g>
+<text x="510" y="162" text-anchor="middle" font-size="9" fill="#555">Each cell = one 512-dim embedding vector</text>
+<text x="510" y="175" text-anchor="middle" font-size="9" fill="#555">Stored as JSON file on disk + in-memory dict</text>
+
+<!-- SAVE TO DB block — the explicit "write" step -->
+<rect x="250" y="56" width="130" height="52" rx="7" fill="#16a34a" stroke="#15803d" stroke-width="1.8" filter="url(#sh)"/>
+<text x="315" y="76" text-anchor="middle" class="mono" font-size="10" font-weight="700" fill="#fff">Save to DB</text>
+<text x="315" y="92" text-anchor="middle" font-size="8.5" fill="#dcfce7">extract 512-dim vector</text>
+<text x="315" y="102" text-anchor="middle" font-size="8.5" fill="#dcfce7">per matched object</text>
+
+<!-- Merging -->
+<rect x="380" y="195" width="210" height="72" rx="7" fill="#fff" stroke="#2563eb" stroke-width="1.8" filter="url(#sh)"/>
+<text x="485" y="217" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#1e40af">Merging</text>
+<text x="485" y="235" text-anchor="middle" font-size="9" fill="#555">average · geometric median ·</text>
+<text x="485" y="248" text-anchor="middle" font-size="9" fill="#555">fine-grained · KNN median (KMeans)</text>
+<text x="485" y="262" text-anchor="middle" font-size="9" fill="#b35900">→ 1 merged embedding per class (512-dim)</text>
+
+<!-- Class Aggregation -->
+<rect x="640" y="195" width="145" height="72" rx="7" fill="#fff" stroke="#666" stroke-width="1.8" stroke-dasharray="5,3"/>
+<text x="712" y="215" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Class</text>
+<text x="712" y="229" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Aggregation</text>
+<text x="712" y="247" text-anchor="middle" font-size="9" fill="#555">softmax → argmax</text>
+<text x="712" y="261" text-anchor="middle" font-size="9" fill="#555">maps scores → class names</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- OUTPUT BLOCKS                                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- Class Embeddings -->
+<rect x="990" y="50" width="175" height="68" rx="7" fill="#fff" stroke="#dc2626" stroke-width="1.8" filter="url(#sh)"/>
+<text x="1077" y="72" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Class Embeddings</text>
+<text x="1077" y="90" text-anchor="middle" font-size="9.5" fill="#555">One 512-dim vector per</text>
+<text x="1077" y="103" text-anchor="middle" font-size="9.5" fill="#555">detected object</text>
+
+<!-- Class Logits -->
+<rect x="990" y="330" width="175" height="68" rx="7" fill="#fff" stroke="#dc2626" stroke-width="1.8" filter="url(#sh)"/>
+<text x="1077" y="350" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Class Logits</text>
+<text x="1077" y="368" text-anchor="middle" font-size="9.5" fill="#555">Similarity score between</text>
+<text x="1077" y="381" text-anchor="middle" font-size="9.5" fill="#555">each patch and each class</text>
+
+<!-- Scores -->
+<rect x="990" y="485" width="175" height="60" rx="7" fill="#fff" stroke="#dc2626" stroke-width="1.8" filter="url(#sh)"/>
+<text x="1077" y="505" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Scores</text>
+<text x="1077" y="523" text-anchor="middle" font-size="9.5" fill="#555">"Is there an object here?"</text>
+<text x="1077" y="538" text-anchor="middle" font-size="9.5" fill="#555">confidence per patch (0-1)</text>
+
+<!-- Predicted Boxes -->
+<rect x="990" y="600" width="175" height="68" rx="7" fill="#fff" stroke="#dc2626" stroke-width="1.8" filter="url(#sh)"/>
+<text x="1077" y="620" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Predicted</text>
+<text x="1077" y="634" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Bounding Boxes</text>
+<text x="1077" y="652" text-anchor="middle" font-size="9.5" fill="#555">x, y, width, height</text>
+<text x="1077" y="662" text-anchor="middle" font-size="9.5" fill="#555">per detected object</text>
+
+<!-- Continual Knowledge Update block -->
+<rect x="990" y="148" width="330" height="120" rx="7" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8" stroke-dasharray="5,3"/>
+<text x="1155" y="170" text-anchor="middle" class="mono" font-size="10.5" font-weight="700" fill="#1e40af">Continual Knowledge Update</text>
+<text x="1155" y="190" text-anchor="middle" font-size="9.5" fill="#555">New embeddings are learned and appended</text>
+<text x="1155" y="206" text-anchor="middle" font-size="9.5" fill="#555">to the database from:</text>
+<text x="1155" y="224" text-anchor="middle" font-size="9.5" fill="#555">- matching detections to ground-truth labels</text>
+<text x="1155" y="240" text-anchor="middle" font-size="9.5" fill="#555">- correcting wrong predictions (ACL)</text>
+<text x="1155" y="256" text-anchor="middle" font-size="9.5" fill="#555">- manual user assignment (UI click)</text>
+
+<!-- Post-Processing -->
+<rect x="990" y="720" width="330" height="82" rx="7" fill="#fff" stroke="#222" stroke-width="1.8" filter="url(#sh)"/>
+<text x="1155" y="742" text-anchor="middle" class="mono" font-size="10.5" font-weight="700">Post-Processing</text>
+<text x="1155" y="762" text-anchor="middle" font-size="9.5" fill="#555">Keep only detections with confidence ≥ 0.2</text>
+<text x="1155" y="778" text-anchor="middle" font-size="9.5" fill="#555">Map internal cluster IDs back to class names</text>
+<text x="1155" y="794" text-anchor="middle" font-size="9.5" fill="#b35900">Final: class names + scores + boxes + embeddings</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DETAIL BOXES (bottom)                                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<rect x="8" y="882" width="430" height="82" rx="7" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+<text x="20" y="902" class="mono" font-size="10" font-weight="700">Preprocessing Steps</text>
+<text x="20" y="918" font-size="9" fill="#555">1. Load image file → raw pixel array (0–255 per channel)</text>
+<text x="20" y="932" font-size="9" fill="#555">2. Normalize pixels to 0.0–1.0 range (divide by 255)</text>
+<text x="20" y="946" font-size="9" fill="#555">3. Pad non-square images to a square (gray fill)</text>
+<text x="20" y="960" font-size="9" fill="#555">4. Resize to 960×960 pixels → ready for model input</text>
+
+<rect x="450" y="882" width="430" height="82" rx="7" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+<text x="462" y="902" class="mono" font-size="10" font-weight="700">Merging Strategies (how stored embeddings are combined)</text>
+<text x="462" y="918" font-size="9" fill="#555">Average: mean of all stored vectors per class → 1 vector</text>
+<text x="462" y="932" font-size="9" fill="#555">Geometric Median: robust center point (Weiszfeld algorithm)</text>
+<text x="462" y="946" font-size="9" fill="#555">Fine-grained: keep every vector, match individually</text>
+<text x="462" y="960" font-size="9" fill="#555">KNN Median: cluster vectors with KMeans, keep cluster centers</text>
+
+<rect x="892" y="882" width="440" height="82" rx="7" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+<text x="904" y="902" class="mono" font-size="10" font-weight="700">Storage &amp; Model Details</text>
+<text x="904" y="918" font-size="9" fill="#555">Database: JSON file on disk + Python dict in memory (no vector DB)</text>
+<text x="904" y="932" font-size="9" fill="#555">Each embedding: 512 floating-point numbers (a 512-dim vector)</text>
+<text x="904" y="946" font-size="9" fill="#555">Model: OWL-ViT v2 backbone, CLIP ViT-B/16, input: 960×960px</text>
+<text x="904" y="960" font-size="9" fill="#555">3600 patches (60×60 grid), 768-dim internal, 512-dim output</text>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ARROWS — drawn first so blocks/labels sit on top        -->
+<!-- All text labels have white background rects              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<!-- Text Prompts → Text Embedder -->
+<path d="M 198,91 L 225,91 Q 233,91 233,120 L 233,373 Q 233,373 260,373" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="206" y="190" width="54" height="14" rx="2" fill="#eae9e5"/>
+<text x="210" y="200" font-size="8" font-weight="600" fill="#b35900">text strings</text>
+
+<!-- Image Prompts → Backbone (query) -->
+<path d="M 198,209 L 225,209 Q 233,209 233,300 L 233,471 Q 233,471 260,471" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="206" y="330" width="56" height="14" rx="2" fill="#eae9e5"/>
+<text x="210" y="340" font-size="8" font-weight="600" fill="#b35900">pixel images</text>
+
+<!-- Image Prompts → Save to DB (green arrow — the saving path) -->
+<path d="M 198,190 L 225,190 Q 233,190 233,140 L 233,82 Q 233,82 250,82" fill="none" stroke="#16a34a" stroke-width="2.2" marker-end="url(#ahg)"/>
+<rect x="206" y="128" width="56" height="14" rx="2" fill="#d4f5c0"/>
+<text x="210" y="138" font-size="8" font-weight="700" fill="#16a34a">save path</text>
+
+<!-- Save to DB → Database -->
+<path d="M 380,82 L 410,82" fill="none" stroke="#16a34a" stroke-width="2.2" marker-end="url(#ahg)"/>
+
+<!-- Feedback: Class Embeddings output → Save to DB (green arrow) -->
+<path d="M 990,84 L 960,84 Q 950,84 950,60 L 950,36 Q 950,28 870,28 L 380,28 Q 315,28 315,56" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-dasharray="6,3" marker-end="url(#ahg)"/>
+<rect x="580" y="16" width="195" height="14" rx="2" fill="#d4f5c0"/>
+<text x="584" y="26" font-size="8.5" font-weight="700" fill="#16a34a">new embeddings saved back to database</text>
+
+<!-- Target Image → Preprocessing -->
+<path d="M 108,528 L 108,570" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Preprocessing → Backbone (target) -->
+<path d="M 198,620 L 240,620 Q 248,620 248,598 L 248,584 Q 248,584 260,584" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="200" y="604" width="66" height="12" rx="2" fill="#fef3c7"/>
+<text x="204" y="613" font-size="8" font-weight="600" fill="#b35900">960×960 image</text>
+
+<!-- Text Embedder → Class Predictor -->
+<path d="M 415,373 L 450,373 Q 460,373 460,385 L 460,407 Q 460,411 680,411" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="476" y="356" width="60" height="22" rx="2" fill="#fef3c7"/>
+<text x="480" y="366" font-size="8" font-weight="600" fill="#b35900">512-dim vector</text>
+<text x="480" y="376" font-size="8" font-weight="600" fill="#b35900">per class</text>
+
+<!-- Backbone (query) → Image Embedder -->
+<path d="M 415,471 L 470,471" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="416" y="455" width="50" height="22" rx="2" fill="#fef3c7"/>
+<text x="420" y="465" font-size="8" font-weight="600" fill="#b35900">60×60 map</text>
+<text x="420" y="475" font-size="8" font-weight="600" fill="#b35900">768-dim</text>
+
+<!-- Image Embedder → Class Predictor -->
+<path d="M 625,465 L 650,465 Q 660,465 660,440 L 660,420 Q 660,416 680,416" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Backbone (target) → Reshape -->
+<path d="M 415,584 L 470,584" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="416" y="574" width="50" height="12" rx="2" fill="#fef3c7"/>
+<text x="420" y="583" font-size="8" font-weight="600" fill="#b35900">60×60 map</text>
+
+<!-- Reshape → Objectness -->
+<path d="M 625,573 L 650,573 Q 660,573 660,545 L 660,531 Q 660,531 680,531" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Reshape → Box Predictor -->
+<path d="M 625,593 L 650,593 Q 660,593 660,630 L 660,646 Q 660,646 680,646" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Reshape → Class Predictor (target image features) -->
+<path d="M 625,566 L 648,566 Q 655,566 655,490 L 655,425 Q 655,420 680,420" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="640" y="487" width="16" height="62" rx="2" fill="#fef3c7"/>
+<text x="659" y="498" font-size="8" font-weight="600" fill="#b35900" transform="rotate(-90,654,510)">3600 patch vectors</text>
+
+<!-- Class Predictor → Class Logits output -->
+<path d="M 835,411 L 920,411 Q 930,411 930,385 L 930,364 Q 930,364 990,364" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="866" y="395" width="56" height="12" rx="2" fill="#fef3c7"/>
+<text x="870" y="404" font-size="8" font-weight="600" fill="#b35900">class scores</text>
+
+<!-- Class Predictor → Class Embeddings output -->
+<path d="M 835,395 L 910,395 Q 920,395 920,260 L 920,84 Q 920,84 990,84" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="920" y="230" width="48" height="24" rx="2" fill="#f0efeb"/>
+<text x="924" y="242" font-size="8" font-weight="600" fill="#b35900">512-dim</text>
+<text x="924" y="252" font-size="8" font-weight="600" fill="#b35900">vectors</text>
+
+<!-- Objectness → Scores output -->
+<path d="M 835,531 L 920,531 Q 930,531 930,517 L 930,515 Q 930,515 990,515" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="854" y="516" width="56" height="12" rx="2" fill="#fef3c7"/>
+<text x="858" y="525" font-size="8" font-weight="600" fill="#b35900">confidence</text>
+
+<!-- Box Predictor → Boxes output -->
+<path d="M 835,646 L 990,634" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+<rect x="854" y="630" width="72" height="12" rx="2" fill="#fef3c7"/>
+<text x="858" y="639" font-size="8" font-weight="600" fill="#b35900">bounding boxes</text>
+
+<!-- Database → Merging -->
+<path d="M 510,152 L 510,195" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#ah)"/>
+
+<!-- Merging → Class Predictor (query embeddings) -->
+<path d="M 485,267 L 485,282 Q 485,292 495,292 L 665,292 Q 670,292 670,320 L 670,375" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ahb)"/>
+<rect x="524" y="277" width="128" height="22" rx="2" fill="#d4f5c0"/>
+<text x="530" y="288" font-size="8.5" font-weight="600" fill="#2563eb">merged query embeddings</text>
+<text x="530" y="298" font-size="8.5" font-weight="600" fill="#2563eb">(1 vector per class, 512-dim)</text>
+
+<!-- Class Aggregation ← Class Predictor (dashed) -->
+<path d="M 757,375 L 757,330 Q 757,300 750,288 L 750,267" fill="none" stroke="#666" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+<rect x="758" y="306" width="72" height="22" rx="2" fill="#d4f5c0"/>
+<text x="762" y="316" font-size="8" fill="#666">aggregate class</text>
+<text x="762" y="326" font-size="8" fill="#666">scores</text>
+
+<!-- Outputs → Post-Processing (dashed) -->
+<path d="M 1077,398 L 1077,420 Q 1077,430 1090,430 L 1090,720" fill="none" stroke="#666" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+<path d="M 1077,545 L 1077,560 Q 1077,570 1120,570 L 1120,720" fill="none" stroke="#666" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+<path d="M 1077,668 L 1077,690 Q 1077,700 1150,700 L 1150,720" fill="none" stroke="#666" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#ah)"/>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- LEGEND                                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<rect x="8" y="980" width="1324" height="36" rx="6" fill="#fff" stroke="#ddd" stroke-width="1"/>
+<rect x="20" y="990" width="15" height="10" rx="2" fill="#d4f5c0" stroke="#7ed957" stroke-width="1"/>
+<text x="40" y="999" font-size="9" fill="#555">Knowledge Update</text>
+<rect x="155" y="990" width="15" height="10" rx="2" fill="#fef3c7" stroke="#d4a72c" stroke-width="1"/>
+<text x="175" y="999" font-size="9" fill="#555">OWL-ViT v2</text>
+<rect x="260" y="990" width="15" height="10" rx="2" fill="#1a1a1a" stroke="#000" stroke-width="1"/>
+<text x="280" y="999" font-size="9" fill="#555">Neural Network</text>
+<rect x="370" y="990" width="15" height="10" rx="2" fill="#fff" stroke="#dc2626" stroke-width="1.5"/>
+<text x="390" y="999" font-size="9" fill="#555">Output</text>
+<!-- green save arrow legend -->
+<line x1="435" y1="995" x2="465" y2="995" stroke="#16a34a" stroke-width="2"/>
+<polygon points="465 992,471 995,465 998" fill="#16a34a"/>
+<text x="476" y="999" font-size="9" font-weight="600" fill="#16a34a">Save to Database</text>
+<!-- database cylinder mini -->
+<ellipse cx="610" cy="993" rx="8" ry="4" fill="#fff" stroke="#555" stroke-width="1"/>
+<rect x="602" y="993" width="16" height="6" fill="#fff" stroke="#555" stroke-width="1"/>
+<path d="M 602,999 Q 602,1003 610,1003 Q 618,1003 618,999" fill="none" stroke="#555" stroke-width="1"/>
+<text x="627" y="999" font-size="9" fill="#555">Database</text>
+<!-- blue -->
+<line x1="690" y1="995" x2="720" y2="995" stroke="#2563eb" stroke-width="1.5"/>
+<polygon points="720 992,726 995,720 998" fill="#2563eb"/>
+<text x="731" y="999" font-size="9" fill="#555">Merging</text>
+<!-- brown labels -->
+<line x1="790" y1="995" x2="815" y2="995" stroke="#b35900" stroke-width="1.5"/>
+<text x="820" y="999" font-size="9" font-weight="600" fill="#b35900">data flow labels</text>
+<!-- dashed -->
+<line x1="920" y1="995" x2="950" y2="995" stroke="#666" stroke-width="1.5" stroke-dasharray="4,2"/>
+<text x="955" y="999" font-size="9" fill="#555">to post-processing</text>
+<!-- green dashed -->
+<line x1="1050" y1="995" x2="1080" y2="995" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,2"/>
+<text x="1085" y="999" font-size="9" fill="#555">feedback loop</text>
+
+<!-- KEY DIMENSIONS -->
+<rect x="8" y="1028" width="1324" height="38" rx="6" fill="#fff8e7" stroke="#d4a72c" stroke-width="1"/>
+<text x="20" y="1046" class="mono" font-size="9.5" font-weight="700" fill="#92600a">Key dimensions:</text>
+<text x="150" y="1046" font-size="9.5" fill="#555">Image input = 960×960 pixels</text>
+<text x="340" y="1046" font-size="9.5" fill="#555">Patches = 3600 (60×60 grid, each 16×16 px)</text>
+<text x="620" y="1046" font-size="9.5" fill="#555">Internal features = 768-dimensional</text>
+<text x="870" y="1046" font-size="9.5" fill="#555">Embedding output = 512-dimensional vectors</text>
+<text x="1155" y="1046" font-size="9.5" fill="#555">Boxes = 4 values (x, y, w, h)</text>
+<text x="20" y="1060" font-size="8.5" fill="#999">A 512-dim vector means 512 floating-point numbers that together represent the "meaning" of an image or text — the model's internal representation used for matching and classification.</text>
+
+</svg>
+</div>
+</body>
+</html>

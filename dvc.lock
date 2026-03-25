@@ -1,0 +1,52 @@
+schema: '2.0'
+stages:
+  preload_embeddings:
+    cmd: "bash scripts/dvc_preload_embeddings.sh --object-store data/object_store
+      --chroma-path data/chroma_db --summary-out data/preload_run_summary.json\n"
+    deps:
+    - path: data/object_store/classes.txt
+      hash: md5
+      md5: 2224caffa98b46da55ed4131b01a9989
+      size: 7
+    - path: data/object_store/images
+      hash: md5
+      md5: 6ffbaaad7b4ac6e1afabed19a80b2560.dir
+      size: 0
+      nfiles: 1
+    - path: data/object_store/labels
+      hash: md5
+      md5: 6ffbaaad7b4ac6e1afabed19a80b2560.dir
+      size: 0
+      nfiles: 1
+    - path: detection/OWL_VIT_v2/image_conditioned.py
+      hash: md5
+      md5: 75818c742d199ed78de886331c6cb090
+      size: 12511
+    - path: detection/OWL_VIT_v2/utils.py
+      hash: md5
+      md5: 67ac6935f86eae41eb1f5d47318d14c8
+      size: 16672
+    - path: improved_pipelines
+      hash: md5
+      md5: 2cd94cbdb948ad994da5a70482ee60af.dir
+      size: 38607
+      nfiles: 10
+    - path: requirements.txt
+      hash: md5
+      md5: aa2af36d300329b2d0efc4b5db86a8e5
+      size: 454
+    - path: scripts/dvc_preload_embeddings.sh
+      hash: md5
+      md5: 8d7f58b81a44351d5835ac3bc415e316
+      size: 393
+      isexec: true
+    outs:
+    - path: data/chroma_db
+      hash: md5
+      md5: f73c01b6fa964747e9efebb9b61a156d.dir
+      size: 188416
+      nfiles: 1
+    - path: data/preload_run_summary.json
+      hash: md5
+      md5: 330a57b5d6410216f28598a922a63f60
+      size: 494

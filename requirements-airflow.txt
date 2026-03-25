@@ -1,0 +1,3 @@
+# Install in a separate environment from the JAX/OWL app (avoids dependency conflicts).
+# Example: python3 -m venv .venv-airflow && . .venv-airflow/bin/activate && pip install -r requirements-airflow.txt
+apache-airflow>=2.8.0,<3

@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local ML / data artifacts
+data/chroma_db/
+mlruns/
+.dvc/tmp

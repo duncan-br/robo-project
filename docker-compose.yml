@@ -1,0 +1,22 @@
+name: open-robo-vision
+
+services:
+  open-robo-vision:
+    image: open-robo-vision:gpu
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: gpu
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      OWL_CHECKPOINT_PATH: ${OWL_CHECKPOINT_PATH:-/app/detection/OWL_VIT_v2/owl_vit/weights/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05_209b65b}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+      XLA_FLAGS: ${XLA_FLAGS:-}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - .:/app
+      - ${OWL_WEIGHTS_DIR:-./weights}:/weights/owl:ro
+    gpus: all
+    stdin_open: true
+    tty: true
