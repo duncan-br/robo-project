@@ -7,6 +7,7 @@ __pycache__/
 data/chroma_db/
 mlruns/
 .dvc/tmp
+.dvc/cache/
 
 # OWL-ViT checkpoints are large; provide at runtime via OWL_WEIGHTS_DIR bind mount (see docker-compose).
 detection/OWL_VIT_v2/owl_vit/weights/

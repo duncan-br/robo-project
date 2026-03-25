@@ -1,0 +1,5 @@
+outs:
+- md5: 3fbf1500e11ed064ad5fecb08dbf5268
+  size: 618308102
+  hash: md5
+  path: owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05_209b65b

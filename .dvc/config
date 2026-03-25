@@ -1,2 +1,5 @@
 [core]
     no_scm = True
+    remote = localstore
+['remote "localstore"']
+    url = /Users/duncanbraakhekke/dvcstore
