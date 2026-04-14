@@ -1,15 +1,11 @@
-# Run: `dvc init` once, then `dvc repro preload_embeddings`
-# Adjust deps/outs paths or use `dvc stage` to regenerate this file.
-
 stages:
   preload_embeddings:
     cmd: >
-      bash scripts/dvc_preload_embeddings.sh
+      python -m improved_pipelines.preload_embeddings
       --object-store data/object_store
       --chroma-path data/chroma_db
       --summary-out data/preload_run_summary.json
     deps:
-      - scripts/dvc_preload_embeddings.sh
       - improved_pipelines
       - detection/OWL_VIT_v2/image_conditioned.py
       - detection/OWL_VIT_v2/utils.py
@@ -20,3 +16,21 @@ stages:
     outs:
       - data/chroma_db
       - data/preload_run_summary.json
+
+  validate_gold:
+    cmd: >
+      python -m improved_pipelines.validate_gold
+      --object-store data/object_store
+      --chroma-path data/chroma_db
+      --report-out data/validation_report.json
+    deps:
+      - improved_pipelines
+      - detection/OWL_VIT_v2/image_conditioned.py
+      - detection/OWL_VIT_v2/utils.py
+      - requirements.txt
+      - data/chroma_db
+      - data/object_store/classes.txt
+      - data/object_store/images
+      - data/object_store/labels
+    outs:
+      - data/validation_report.json

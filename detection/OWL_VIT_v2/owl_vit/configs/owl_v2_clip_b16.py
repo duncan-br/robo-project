@@ -32,7 +32,7 @@ CHECKPOINTS['canonical_checkpoint'] = CHECKPOINTS[
     'owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05'
 ]
 
-CHECKPOINTS['canonical_checkpoint_local'] = '/home/hojat/Sources/Riwald/Riwald_WP2-3/waste_detection/detection/OWL-ViT/owl_vit/weights/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05_209b65b'
+CHECKPOINTS['canonical_checkpoint_local'] = '/Users/duncanbraakhekke/Documents/School/master-software/View_Shot_Vision/open_robo_vision/detection/OWL_VIT_v2/owl_vit/weights/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05_209b65b'
 
 def get_config(init_mode='canonical_checkpoint'):
   """Returns the configuration for text-query-based detection using OWL-ViT."""

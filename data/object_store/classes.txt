@@ -1,1 +1,9 @@
-object
+adapter
+charger
+keyboard
+laptop
+memory
+mobile
+monitor
+mouse
+Dishwasher

@@ -5,10 +5,25 @@ __pycache__/
 
 # Local ML / data artifacts
 data/chroma_db/
+data/mlflow.db
+data/mlflow.db-wal
+data/mlflow.db-shm
 mlruns/
+dagster_storage/
+.dagster_home/*
+.tmp_dagster_home_*/
+
 .dvc/tmp
 .dvc/cache/
 
 # OWL-ViT checkpoints are large; provide at runtime via OWL_WEIGHTS_DIR bind mount (see docker-compose).
 detection/OWL_VIT_v2/owl_vit/weights/
 weights/
+
+e_waste_dataset/*
+data/object_store/*
+data/review_queue/*
+data/chroma_db/*
+.cursor/*
+
+data/stream_uploads/*

@@ -1,20 +1,21 @@
-# =============================================================================
-# CPU image + noVNC — macOS Docker Desktop dev (build target: `cpu`)
-# =============================================================================
-# Ubuntu 22.04: system python3 is 3.10, and python3-tk matches that interpreter.
-# The official python:3.10-slim-bookworm image installs Python under /usr/local; apt's
-# python3-tk on Bookworm targets Debian's python3 (3.11), so Tkinter would be missing at runtime.
 FROM ubuntu:22.04 AS cpu
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app:/opt/ros/humble/lib/python3.10/dist-packages
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg2 lsb-release software-properties-common \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+       -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+       http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+       > /etc/apt/sources.list.d/ros2.list \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    python3-tk \
-    tk \
     libgl1 \
     libglib2.0-0 \
     xvfb \
@@ -22,6 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     novnc \
     fluxbox \
     x11-xserver-utils \
+    ros-humble-rosbag2 \
+    ros-humble-sensor-msgs \
+    ros-humble-cv-bridge \
+    python3-rosbag2 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3 /usr/local/bin/python3
 
@@ -39,22 +44,30 @@ EXPOSE 6080
 
 ENTRYPOINT ["/entrypoint-novnc.sh"]
 
-# =============================================================================
-# GPU image — Linux + NVIDIA Container Toolkit (default build stage: `gpu`)
-# =============================================================================
 FROM nvidia/cuda:12.3.2-cudnn9-runtime-ubuntu22.04 AS gpu
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app:/opt/ros/humble/lib/python3.10/dist-packages
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg2 lsb-release software-properties-common \
+    && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+       -o /usr/share/keyrings/ros-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+       http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+       > /etc/apt/sources.list.d/ros2.list \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    python3-tk \
-    tk \
     libgl1 \
     libglib2.0-0 \
+    ros-humble-rosbag2 \
+    ros-humble-sensor-msgs \
+    ros-humble-cv-bridge \
+    python3-rosbag2 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3 /usr/local/bin/python
 
@@ -66,4 +79,4 @@ RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel \
 
 COPY . .
 
-CMD ["python3", "ui/main_ui.py"]
+CMD ["python3", "-m", "on_device_app"]

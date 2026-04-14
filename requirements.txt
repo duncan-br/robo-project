@@ -1,5 +1,7 @@
 ttkbootstrap
-jax[cuda]==0.5
+# Plain jax/jaxlib: `jax[cuda]` breaks pip on Python 3.12 / macOS and needs NVIDIA CUDA. For GPU on Linux, see https://jax.readthedocs.io/en/latest/installation.html
+jax==0.5.0
+jaxlib==0.5.0
 ott-jax==0.2
 ml-collections
 six==1.17.0
@@ -8,9 +10,9 @@ flax==0.10.3
 msgpack==1.1.0
 rich==13.9.4
 google==3.0.0
-protobuf==3.19.6
+# TensorFlow: 2.11 has no wheels for Python 3.12+. 2.16 pins ml-dtypes~=0.3 which conflicts with jax 0.5 (needs ml-dtypes>=0.4); 2.18+ allows ml-dtypes>=0.4.
 einops==0.8.1
-tensorflow[and-cuda]==2.11.1
+tensorflow>=2.18.0,<2.19
 wrapt==1.17.2
 requests==2.32.3
 tqdm>=4.66.0
@@ -27,3 +29,13 @@ scipy>=1.11.0
 chromadb>=0.5.0
 dvc>=3.50.0
 mlflow>=2.10.0
+PySide6>=6.6.0
+dagster>=1.8,<2
+dagster-webserver>=1.8,<2
+pyarrow>=14.0.0
+fastapi>=0.111.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+python-multipart>=0.0.9
+rosbags>=0.9.20
+websockets>=12.0

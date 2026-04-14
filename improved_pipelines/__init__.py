@@ -1,1 +1,1 @@
-"""Offline pipelines: object store, Chroma embedding DB, OWL-ViT preload."""
+"""Offline pipelines: object store, Chroma, preload, inference, review UI, validation."""

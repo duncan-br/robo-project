@@ -1,20 +1,7 @@
-# macOS development (Docker Desktop): CPU JAX + noVNC in the browser.
-#
-# On Apple Silicon we build/run native linux/arm64 (faster, avoids platform mismatch errors).
-# If your Docker Desktop / Buildx ever builds-but-doesn't-load the image, use:
-#   ./scripts/docker-mac-up.sh
-#
-# Open http://localhost:6080/vnc.html (click Connect; password empty)
-#
-# Optional merge with the Linux file only if you maintain matching service blocks:
-#   docker compose -f docker-compose.yml -f docker-compose.mac.yml up --build
-# Prefer this file alone on Mac to avoid GPU / X11 settings from docker-compose.yml.
-
 name: open-robo-vision-mac
 
 services:
   open-robo-vision:
-    # Explicit tag so Compose/Buildx registers the image in the local daemon after build.
     image: open-robo-vision:mac-dev
     build:
       context: .
@@ -23,7 +10,6 @@ services:
     ports:
       - "6080:6080"
     environment:
-      # In-repo weights (see detection/OWL_VIT_v2/owl_vit/weights/); override if you use ./weights → /weights/owl
       OWL_CHECKPOINT_PATH: ${OWL_CHECKPOINT_PATH:-/app/detection/OWL_VIT_v2/owl_vit/weights/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05/owl2-b16-960-st-ngrams-curated-ft-lvisbase-ens-cold-weight-05_209b65b}
       XLA_FLAGS: ${XLA_FLAGS:-}
     volumes:

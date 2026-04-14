@@ -1,10 +1,6 @@
-# CPU-only JAX/TensorFlow for Docker (Linux/macOS dev) — use with Dockerfile target `cpu`.
-ttkbootstrap
-jax[cpu]==0.5
+jax==0.5.0
+jaxlib==0.5.0
 ott-jax==0.2
-# TensorFlow 2.11 + several compiled deps are not compatible with NumPy 2.x.
-# Keep NumPy on 1.26 for stable binary compatibility in the macOS dev container.
-numpy==1.26.4
 ml-collections
 six==1.17.0
 pyyaml==6.0.2
@@ -12,11 +8,9 @@ flax==0.10.3
 msgpack==1.1.0
 rich==13.9.4
 google==3.0.0
-protobuf==3.19.6
 einops==0.8.1
-# 2.11.1 has no Linux aarch64 wheel (pip wants tensorflow-cpu-aws==2.11.1, which was never published).
-# 2.11.0 is the last 2.11 line with aarch64; needed for Apple Silicon / arm64 Docker builds.
-tensorflow==2.11.0
+# Align with requirements.txt: TF 2.11 lacks wheels for Python 3.12+; 2.18 works with jax 0.5 / ml-dtypes>=0.4
+tensorflow>=2.18.0,<2.19
 wrapt==1.17.2
 requests==2.32.3
 matplotlib==3.10.0
@@ -34,3 +28,7 @@ tqdm>=4.66.0
 chromadb>=0.5.0
 dvc>=3.50.0
 mlflow>=2.10.0
+PySide6>=6.6.0
+dagster>=1.8,<2
+dagster-webserver>=1.8,<2
+pyarrow>=14.0.0

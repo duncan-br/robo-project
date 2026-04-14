@@ -1,0 +1,593 @@
+{
+  "sample_fraction": 0.2,
+  "seed": 42,
+  "max_images": 10,
+  "min_expected_cosine": 0.75,
+  "overall_mean_cosine": 0.7145285555758537,
+  "overall_min_cosine": 0.05268463119864464,
+  "overall_std_cosine": 0.26016454412245926,
+  "comparisons_count": 78,
+  "passes_threshold": false,
+  "per_class": [
+    {
+      "scope": "class",
+      "class_name": "adapter",
+      "aug_name": "__all__",
+      "mean_cosine": 0.9118161300818125,
+      "min_cosine": 0.8393541574478149,
+      "std_cosine": 0.04862369366522088,
+      "count": 6
+    },
+    {
+      "scope": "class",
+      "class_name": "keyboard",
+      "aug_name": "__all__",
+      "mean_cosine": 0.14027016485730806,
+      "min_cosine": 0.05268463119864464,
+      "std_cosine": 0.07191818051767601,
+      "count": 6
+    },
+    {
+      "scope": "class",
+      "class_name": "laptop",
+      "aug_name": "__all__",
+      "mean_cosine": 0.7369100699822108,
+      "min_cosine": 0.298064261674881,
+      "std_cosine": 0.14854349381378065,
+      "count": 30
+    },
+    {
+      "scope": "class",
+      "class_name": "memory",
+      "aug_name": "__all__",
+      "mean_cosine": 0.8736934264500936,
+      "min_cosine": 0.6558997631072998,
+      "std_cosine": 0.10171677105949194,
+      "count": 12
+    },
+    {
+      "scope": "class",
+      "class_name": "mobile",
+      "aug_name": "__all__",
+      "mean_cosine": 0.7431155542532603,
+      "min_cosine": 0.7091036438941956,
+      "std_cosine": 0.023524188057426072,
+      "count": 6
+    },
+    {
+      "scope": "class",
+      "class_name": "mouse",
+      "aug_name": "__all__",
+      "mean_cosine": 0.6872440568274922,
+      "min_cosine": 0.18202632665634155,
+      "std_cosine": 0.32449300767458844,
+      "count": 18
+    }
+  ],
+  "per_augmentation": [
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "brightness_down",
+      "mean_cosine": 0.7318901006992047,
+      "min_cosine": 0.21618837118148804,
+      "std_cosine": 0.24729056971751245,
+      "count": 13
+    },
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "brightness_up",
+      "mean_cosine": 0.7144314887431952,
+      "min_cosine": 0.1466682106256485,
+      "std_cosine": 0.27078178567381084,
+      "count": 13
+    },
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "contrast_down",
+      "mean_cosine": 0.7404857997137767,
+      "min_cosine": 0.058046143501996994,
+      "std_cosine": 0.2696278091210803,
+      "count": 13
+    },
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "contrast_up",
+      "mean_cosine": 0.7107252441346645,
+      "min_cosine": 0.05268463119864464,
+      "std_cosine": 0.2774853434968822,
+      "count": 13
+    },
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "gaussian_blur",
+      "mean_cosine": 0.7033278609697635,
+      "min_cosine": 0.2377985566854477,
+      "std_cosine": 0.21535019302244618,
+      "count": 13
+    },
+    {
+      "scope": "augmentation",
+      "class_name": "__all__",
+      "aug_name": "gaussian_noise",
+      "mean_cosine": 0.6863108391945179,
+      "min_cosine": 0.12382388114929199,
+      "std_cosine": 0.2713923182319656,
+      "count": 13
+    }
+  ],
+  "comparisons": [
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.7622175216674805
+    },
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.7778359055519104
+    },
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.9547731280326843
+    },
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.9374736547470093
+    },
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.9657180309295654
+    },
+    {
+      "image_id": "800_jpeg_jpg.rf.b173c4d6428394a99e06cb311c56289a",
+      "class_name": "mouse",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.668124794960022
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.988432765007019
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.9880019426345825
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.9747589230537415
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.9852150678634644
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.9826570749282837
+    },
+    {
+      "image_id": "795_jpeg_jpg.rf.d135b879b2f61990c34562c16b9c5d18",
+      "class_name": "mouse",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.9076876044273376
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.5572980046272278
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.5627123117446899
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.524228572845459
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.560137927532196
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.298064261674881
+    },
+    {
+      "image_id": "306_jpg.rf.45d6efb12cc26a27cd38afd9b9b8aa98",
+      "class_name": "laptop",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.5142037868499756
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.7978683710098267
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.7331023812294006
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.7277253866195679
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.6138861179351807
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.7951498627662659
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.8160110712051392
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.7444958090782166
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.6635738611221313
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.7368878126144409
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.7223309278488159
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.7596665620803833
+    },
+    {
+      "image_id": "IMG_20200329_142707_jpg.rf.3d690f61f0c22c0e161007cb5e48febc",
+      "class_name": "laptop",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.7960299849510193
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.7091036438941956
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.7274143099784851
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.7652970552444458
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.7632876634597778
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.7245358228683472
+    },
+    {
+      "image_id": "Copy-of-IMG_20200328_134852_jpg.rf.aa2fd1cb8ab745622e199f49ffccc11e",
+      "class_name": "mobile",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.7690548300743103
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.8556764125823975
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.8859772682189941
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.9500495195388794
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.8656374216079712
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.94675213098526
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.9947537183761597
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.7265767455101013
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.8755258917808533
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.9778163433074951
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.9925277233123779
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.9420972466468811
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.7870463132858276
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.8794355392456055
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.9811900854110718
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.6558997631072998
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "adapter",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.8393541574478149
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.9130910038948059
+    },
+    {
+      "image_id": "WhatsApp-Image-2022-12-14-at-16-30-34-1-_jpeg_jpg.rf.f2a0ce1845934092dc82fe1366321b81",
+      "class_name": "memory",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.8858106136322021
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.9942333102226257
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.992670476436615
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.9868264198303223
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.8394172787666321
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.8059087991714478
+    },
+    {
+      "image_id": "IMG_20200328_131230_jpg.rf.b9be324b5464856c509595639479b223",
+      "class_name": "laptop",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.815827488899231
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.21618837118148804
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.18202632665634155
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.32192760705947876
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.2066095918416977
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.2715858221054077
+    },
+    {
+      "image_id": "757_jpg.rf.fab60939e32f85a302ff5dfcb4a6303b",
+      "class_name": "mouse",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.27915889024734497
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.8418241739273071
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.7615250945091248
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.8493776321411133
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.7648614048957825
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.7740030884742737
+    },
+    {
+      "image_id": "264_jpeg_jpg.rf.38d64771cbc8d5400bd6fe15e1c1383a",
+      "class_name": "laptop",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.7574539184570312
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "brightness_down",
+      "cosine_sim": 0.2225995659828186
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "brightness_up",
+      "cosine_sim": 0.1466682106256485
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "contrast_down",
+      "cosine_sim": 0.058046143501996994
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "contrast_up",
+      "cosine_sim": 0.05268463119864464
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "gaussian_noise",
+      "cosine_sim": 0.12382388114929199
+    },
+    {
+      "image_id": "13_jpeg_jpg.rf.d09f54d66e34182872ed47dff6f66dd4",
+      "class_name": "keyboard",
+      "aug_name": "gaussian_blur",
+      "cosine_sim": 0.2377985566854477
+    }
+  ]
+}

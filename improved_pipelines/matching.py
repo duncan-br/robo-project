@@ -1,4 +1,4 @@
-"""Match OWL tokens to YOLO GT (same geometry as ui/main_ui.py From GT mode)."""
+"""Match OWL tokens to YOLO GT using the shared preload/validation geometry."""
 
 from __future__ import annotations
 

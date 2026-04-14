@@ -10,11 +10,9 @@ __pycache__
 **/.pytest_cache
 **/node_modules
 
-# OWL-ViT checkpoints are large; provide at runtime via OWL_WEIGHTS_DIR bind mount (see docker-compose).
 detection/OWL_VIT_v2/owl_vit/weights/
 weights/
 
-# Cut build context size (not used by the UI container)
 *.pdf
 *.pth
 *.pkl

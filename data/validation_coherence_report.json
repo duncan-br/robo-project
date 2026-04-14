@@ -1,0 +1,289 @@
+{
+  "classes_total": 8,
+  "classes_unhealthy": 8,
+  "min_exemplars": 3,
+  "min_intra_sim": 0.55,
+  "max_inter_sim": 0.9,
+  "intra_class": [
+    {
+      "class_name": "adapter",
+      "count": 140,
+      "mean_cosine_sim": 0.5165246725082397,
+      "min_cosine_sim": -0.1450192779302597,
+      "std_cosine_sim": 0.229800283908844
+    },
+    {
+      "class_name": "charger",
+      "count": 2,
+      "mean_cosine_sim": 0.8386648893356323,
+      "min_cosine_sim": 0.8386648893356323,
+      "std_cosine_sim": 0.0
+    },
+    {
+      "class_name": "keyboard",
+      "count": 406,
+      "mean_cosine_sim": 0.5703659057617188,
+      "min_cosine_sim": -0.06553477048873901,
+      "std_cosine_sim": 0.17132477462291718
+    },
+    {
+      "class_name": "laptop",
+      "count": 969,
+      "mean_cosine_sim": 0.56035977602005,
+      "min_cosine_sim": -0.10168904066085815,
+      "std_cosine_sim": 0.14815883338451385
+    },
+    {
+      "class_name": "memory",
+      "count": 273,
+      "mean_cosine_sim": 0.5133825540542603,
+      "min_cosine_sim": -0.1417500376701355,
+      "std_cosine_sim": 0.21786615252494812
+    },
+    {
+      "class_name": "mobile",
+      "count": 1269,
+      "mean_cosine_sim": 0.4993225932121277,
+      "min_cosine_sim": -0.1730293333530426,
+      "std_cosine_sim": 0.17987175285816193
+    },
+    {
+      "class_name": "monitor",
+      "count": 562,
+      "mean_cosine_sim": 0.5479655861854553,
+      "min_cosine_sim": -0.08831224590539932,
+      "std_cosine_sim": 0.15210622549057007
+    },
+    {
+      "class_name": "mouse",
+      "count": 670,
+      "mean_cosine_sim": 0.43490082025527954,
+      "min_cosine_sim": -0.1413644701242447,
+      "std_cosine_sim": 0.23018673062324524
+    }
+  ],
+  "inter_class": [
+    {
+      "class_a": "adapter",
+      "class_b": "charger",
+      "centroid_cosine_sim": 0.517983078956604
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "keyboard",
+      "centroid_cosine_sim": 0.8025277256965637
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "laptop",
+      "centroid_cosine_sim": 0.8100730776786804
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "memory",
+      "centroid_cosine_sim": 0.9834588766098022
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "mobile",
+      "centroid_cosine_sim": 0.8274097442626953
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.7962543368339539
+    },
+    {
+      "class_a": "adapter",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.9429691433906555
+    },
+    {
+      "class_a": "charger",
+      "class_b": "keyboard",
+      "centroid_cosine_sim": 0.5897444486618042
+    },
+    {
+      "class_a": "charger",
+      "class_b": "laptop",
+      "centroid_cosine_sim": 0.5619200468063354
+    },
+    {
+      "class_a": "charger",
+      "class_b": "memory",
+      "centroid_cosine_sim": 0.482074499130249
+    },
+    {
+      "class_a": "charger",
+      "class_b": "mobile",
+      "centroid_cosine_sim": 0.5055856704711914
+    },
+    {
+      "class_a": "charger",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.548790693283081
+    },
+    {
+      "class_a": "charger",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.5171456336975098
+    },
+    {
+      "class_a": "keyboard",
+      "class_b": "laptop",
+      "centroid_cosine_sim": 0.9330239295959473
+    },
+    {
+      "class_a": "keyboard",
+      "class_b": "memory",
+      "centroid_cosine_sim": 0.8160698413848877
+    },
+    {
+      "class_a": "keyboard",
+      "class_b": "mobile",
+      "centroid_cosine_sim": 0.8462658524513245
+    },
+    {
+      "class_a": "keyboard",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.8693511486053467
+    },
+    {
+      "class_a": "keyboard",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.8207000494003296
+    },
+    {
+      "class_a": "laptop",
+      "class_b": "memory",
+      "centroid_cosine_sim": 0.836597204208374
+    },
+    {
+      "class_a": "laptop",
+      "class_b": "mobile",
+      "centroid_cosine_sim": 0.9203272461891174
+    },
+    {
+      "class_a": "laptop",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.9528455138206482
+    },
+    {
+      "class_a": "laptop",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.8401757478713989
+    },
+    {
+      "class_a": "memory",
+      "class_b": "mobile",
+      "centroid_cosine_sim": 0.8530629873275757
+    },
+    {
+      "class_a": "memory",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.81560218334198
+    },
+    {
+      "class_a": "memory",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.9429120421409607
+    },
+    {
+      "class_a": "mobile",
+      "class_b": "monitor",
+      "centroid_cosine_sim": 0.9169275760650635
+    },
+    {
+      "class_a": "mobile",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.8843079805374146
+    },
+    {
+      "class_a": "monitor",
+      "class_b": "mouse",
+      "centroid_cosine_sim": 0.831103503704071
+    }
+  ],
+  "class_health": [
+    {
+      "class_name": "adapter",
+      "count": 140,
+      "mean_cosine_sim": 0.5165246725082397,
+      "max_centroid_similarity_to_other": 0.9834588766098022,
+      "is_sparse": false,
+      "is_low_intra_similarity": true,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "charger",
+      "count": 2,
+      "mean_cosine_sim": 0.8386648893356323,
+      "max_centroid_similarity_to_other": 0.5897444486618042,
+      "is_sparse": true,
+      "is_low_intra_similarity": false,
+      "is_high_inter_overlap": false,
+      "is_healthy": false
+    },
+    {
+      "class_name": "keyboard",
+      "count": 406,
+      "mean_cosine_sim": 0.5703659057617188,
+      "max_centroid_similarity_to_other": 0.9330239295959473,
+      "is_sparse": false,
+      "is_low_intra_similarity": false,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "laptop",
+      "count": 969,
+      "mean_cosine_sim": 0.56035977602005,
+      "max_centroid_similarity_to_other": 0.9528455138206482,
+      "is_sparse": false,
+      "is_low_intra_similarity": false,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "memory",
+      "count": 273,
+      "mean_cosine_sim": 0.5133825540542603,
+      "max_centroid_similarity_to_other": 0.9834588766098022,
+      "is_sparse": false,
+      "is_low_intra_similarity": true,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "mobile",
+      "count": 1269,
+      "mean_cosine_sim": 0.4993225932121277,
+      "max_centroid_similarity_to_other": 0.9203272461891174,
+      "is_sparse": false,
+      "is_low_intra_similarity": true,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "monitor",
+      "count": 562,
+      "mean_cosine_sim": 0.5479655861854553,
+      "max_centroid_similarity_to_other": 0.9528455138206482,
+      "is_sparse": false,
+      "is_low_intra_similarity": true,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    },
+    {
+      "class_name": "mouse",
+      "count": 670,
+      "mean_cosine_sim": 0.43490082025527954,
+      "max_centroid_similarity_to_other": 0.9429691433906555,
+      "is_sparse": false,
+      "is_low_intra_similarity": true,
+      "is_high_inter_overlap": true,
+      "is_healthy": false
+    }
+  ]
+}
