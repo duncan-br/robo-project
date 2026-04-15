@@ -231,6 +231,56 @@ class TestStreamProcessorProcessFrame:
         assert len(msg.detections) == 0
         assert msg.frame_jpeg_b64 != ""
 
+    def test_process_frame_tracking_registers_once_on_right_to_left_crossing(
+        self, fake_detector: FakeDetector, tmp_data_dir: Path,
+    ):
+        sp = self._make_processor(fake_detector, tmp_data_dir)
+        frame = np.zeros((120, 120, 3), dtype=np.uint8)
+        settings = InferenceSettings(
+            tracking_enabled=True,
+            tracking_direction="right_to_left",
+            tracking_line_x=0.5,
+            tracking_max_match_dist=0.4,
+            tracking_max_age_ms=2000,
+        )
+
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.8, cy=0.5, w=0.1, h=0.1, score=0.9),
+        ])
+        msg1 = sp._process_frame(frame, 1, settings, run_inference=True)
+        assert len(msg1.detections) == 0
+
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.45, cy=0.5, w=0.1, h=0.1, score=0.9),
+        ])
+        msg2 = sp._process_frame(frame, 2, settings, run_inference=True)
+        assert len(msg2.detections) == 1
+
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.3, cy=0.5, w=0.1, h=0.1, score=0.9),
+        ])
+        msg3 = sp._process_frame(frame, 3, settings, run_inference=True)
+        assert len(msg3.detections) == 0
+
+    def test_process_frame_tracking_disabled_keeps_duplicates(
+        self, fake_detector: FakeDetector, tmp_data_dir: Path,
+    ):
+        sp = self._make_processor(fake_detector, tmp_data_dir)
+        frame = np.zeros((120, 120, 3), dtype=np.uint8)
+        settings = InferenceSettings(tracking_enabled=False)
+
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.8, cy=0.5, w=0.1, h=0.1, score=0.9),
+        ])
+        msg1 = sp._process_frame(frame, 1, settings, run_inference=True)
+        assert len(msg1.detections) == 1
+
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.78, cy=0.5, w=0.1, h=0.1, score=0.9),
+        ])
+        msg2 = sp._process_frame(frame, 2, settings, run_inference=True)
+        assert len(msg2.detections) == 1
+
 class TestInsideRoiEdgeCases:
     def test_roi_exact_boundary(self):
         s = InferenceSettings(roi_x=0.2, roi_y=0.2, roi_w=0.3, roi_h=0.3)

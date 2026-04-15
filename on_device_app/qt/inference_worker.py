@@ -10,6 +10,13 @@ from on_device_app.dto import InferenceSettings
 
 
 class InferenceWorker(QThread):
+    """Runs API inference in a background thread.
+
+    Emits *result_ready* with a dict containing the API response **plus**
+    a ``"_frame_jpeg"`` key holding the original JPEG bytes so the UI can
+    display detections on the exact frame they were computed for.
+    """
+
     result_ready = Signal(dict)
     failed = Signal(str)
 
@@ -48,4 +55,5 @@ class InferenceWorker(QThread):
             except Exception as exc:
                 self.failed.emit(str(exc))
                 continue
-            self.result_ready.emit(dict(result))
+            result["_frame_jpeg"] = frame_jpeg
+            self.result_ready.emit(result)

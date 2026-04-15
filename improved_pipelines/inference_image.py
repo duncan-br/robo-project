@@ -64,6 +64,27 @@ def run_inference_on_image(
     return np.asarray(class_ids), np.asarray(scores), np.asarray(boxes)
 
 
+def run_inference_on_frame(
+    frame_bgr: np.ndarray,
+    detector: ImageConditionedObjectDetector,
+    query_embedding: Dict[str, List[np.ndarray]],
+    class_names: List[str],
+    conf_thresh: float,
+    merging_mode: str,
+    avg_count: int,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Like ``run_inference_on_image`` but accepts a BGR numpy array directly."""
+    class_ids, scores, boxes, _ = detector.process_with_embeddings_bgr(
+        frame_bgr,
+        query_embedding,
+        class_names,
+        conf_thresh=conf_thresh,
+        avg_count=avg_count,
+        merging_mode=merging_mode,
+    )
+    return np.asarray(class_ids), np.asarray(scores), np.asarray(boxes)
+
+
 def route_and_persist(
     image_path: Path,
     class_ids: np.ndarray,

@@ -12,6 +12,11 @@ class InferenceSettings(BaseModel):
     roi_y: float = Field(default=0.0, ge=0.0, le=1.0)
     roi_w: float = Field(default=1.0, ge=0.0, le=1.0)
     roi_h: float = Field(default=1.0, ge=0.0, le=1.0)
+    tracking_enabled: bool = True
+    tracking_direction: str = Field(default="right_to_left", pattern="^(right_to_left|left_to_right)$")
+    tracking_line_x: float = Field(default=0.5, ge=0.0, le=1.0)
+    tracking_max_match_dist: float = Field(default=0.08, gt=0.0, le=1.0)
+    tracking_max_age_ms: int = Field(default=1200, ge=50, le=30_000)
 
     @model_validator(mode="after")
     def validate_roi_bounds(self) -> "InferenceSettings":

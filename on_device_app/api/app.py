@@ -31,6 +31,7 @@ from on_device_app.services import (
     VideoFileSource,
     read_first_stream_frame,
 )
+from on_device_app.ros2.stream_handler import _DEFAULT_TOPIC
 from on_device_app.services.dedup import TtlQuantizedBoxDeduper
 
 
@@ -188,6 +189,11 @@ def create_app(ctx: ServiceContext) -> FastAPI:
         roi_y: float = Form(default=0.0),
         roi_w: float = Form(default=1.0),
         roi_h: float = Form(default=1.0),
+        tracking_enabled: bool = Form(default=True),
+        tracking_direction: str = Form(default="right_to_left"),
+        tracking_line_x: float = Form(default=0.5),
+        tracking_max_match_dist: float = Form(default=0.08),
+        tracking_max_age_ms: int = Form(default=1200),
     ) -> dict:
         settings = InferenceSettings(
             conf_thresh=conf_thresh,
@@ -198,9 +204,14 @@ def create_app(ctx: ServiceContext) -> FastAPI:
             roi_y=roi_y,
             roi_w=roi_w,
             roi_h=roi_h,
+            tracking_enabled=tracking_enabled,
+            tracking_direction=tracking_direction,
+            tracking_line_x=tracking_line_x,
+            tracking_max_match_dist=tracking_max_match_dist,
+            tracking_max_age_ms=tracking_max_age_ms,
         )
         if source == "ros2":
-            stream_source = Ros2TopicSource(topic=topic or "/camera/image_raw")
+            stream_source = Ros2TopicSource(topic=topic or _DEFAULT_TOPIC)
         else:
             uploaded = app.state.uploaded_stream_file
             if not uploaded:

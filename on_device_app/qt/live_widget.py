@@ -36,10 +36,10 @@ from on_device_app.api_client import ApiClient
 from on_device_app.dto import InferenceSettings
 from on_device_app.qt.inference_worker import InferenceWorker
 from on_device_app.qt.shared import apply_roi_overlay, draw_detections_on_pixmap, load_scene_with_bbox
-from on_device_app.ros2 import RosImageStreamHandler
+from on_device_app.ros2 import RosImageStreamHandler, _DEFAULT_TOPIC, detect_image_topics
 
 log = logging.getLogger(__name__)
-_INFER_EVERY_N = 5
+_INFER_EVERY_N = 1
 
 
 class _SettingsDialog(QDialog):
@@ -251,7 +251,7 @@ class LiveInferenceWidget(QWidget):
         self._low_conf_by_id: dict[str, dict] = {}
         self._current_settings = InferenceSettings()
         self._stream_active = False
-        self._mode = "upload"
+        self._mode = "ros2_live"
         self._latest_detections: list[dict] = []
         self._last_frame_bgr: np.ndarray | None = None
         self._frame_count = 0
@@ -267,8 +267,8 @@ class LiveInferenceWidget(QWidget):
         mode_row = QHBoxLayout()
         mode_row.addWidget(QLabel("Mode"))
         self._mode_combo = QComboBox()
-        self._mode_combo.addItem("Upload File", "upload")
         self._mode_combo.addItem("ROS2 Live Stream", "ros2_live")
+        self._mode_combo.addItem("Upload File", "upload")
         self._mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         mode_row.addWidget(self._mode_combo)
         mode_row.addStretch(1)
@@ -289,8 +289,9 @@ class LiveInferenceWidget(QWidget):
         layout.addWidget(self._upload_row_widget)
 
         source_row = QHBoxLayout()
-        self._ros_topic = QLineEdit("")
-        self._ros_topic.setPlaceholderText("auto-detect (or /camera/image_raw)")
+        detected = detect_image_topics()
+        self._ros_topic = QLineEdit(detected[0] if detected else "")
+        self._ros_topic.setPlaceholderText(_DEFAULT_TOPIC)
         settings_btn = QPushButton("Settings...")
         settings_btn.clicked.connect(self._open_settings)
         start_btn = QPushButton("Start stream")
@@ -411,8 +412,8 @@ class LiveInferenceWidget(QWidget):
                 self._ws.open(req)
                 self._status.setText("Starting upload stream...")
                 return
-            self._start_ros_live(topic=topic or "/camera/image_raw")
-            self._status.setText(f"Starting ROS2 live stream from {topic or '/camera/image_raw'}...")
+            self._start_ros_live(topic=topic or _DEFAULT_TOPIC)
+            self._status.setText(f"Starting ROS2 live stream from {topic or _DEFAULT_TOPIC}...")
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "Start failed", str(exc))
 
@@ -510,8 +511,10 @@ class LiveInferenceWidget(QWidget):
             return
         self._frame_count += 1
         self._last_frame_bgr = np.asarray(frame_bgr).copy()
+
         pix = self._pixmap_from_bgr(self._last_frame_bgr)
-        pix = draw_detections_on_pixmap(pix, self._latest_detections)
+        if self._latest_detections:
+            pix = draw_detections_on_pixmap(pix, self._latest_detections)
         apply_roi_overlay(
             pix,
             self._current_settings.roi_x,
@@ -520,7 +523,8 @@ class LiveInferenceWidget(QWidget):
             self._current_settings.roi_h,
         )
         self._video.setPixmap(pix.scaled(self._video.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        if self._worker is not None and (self._frame_count % _INFER_EVERY_N == 1):
+
+        if self._worker is not None and (self._frame_count % _INFER_EVERY_N == 0):
             ok, encoded = cv2.imencode(".jpg", self._last_frame_bgr)
             if ok:
                 self._worker.submit(encoded.tobytes(), self._current_settings)
@@ -533,9 +537,13 @@ class LiveInferenceWidget(QWidget):
             if qid:
                 self._low_conf_by_id[qid] = it
         self._render_low_list()
+
+        payload.pop("_frame_jpeg", None)
+
         if self._last_frame_bgr is not None:
             pix = self._pixmap_from_bgr(self._last_frame_bgr)
-            pix = draw_detections_on_pixmap(pix, self._latest_detections)
+            if self._latest_detections:
+                pix = draw_detections_on_pixmap(pix, self._latest_detections)
             apply_roi_overlay(
                 pix,
                 self._current_settings.roi_x,
@@ -544,6 +552,7 @@ class LiveInferenceWidget(QWidget):
                 self._current_settings.roi_h,
             )
             self._video.setPixmap(pix.scaled(self._video.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
         n_low = len(self._low_conf_by_id)
         self._status.setText(
             f"ROS2 frame #{self._frame_count} | det={len(self._latest_detections)} | low={n_low} (accum.)"

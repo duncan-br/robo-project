@@ -10,7 +10,7 @@ import numpy as np
 from detection.OWL_VIT_v2.image_conditioned import ImageConditionedObjectDetector
 from improved_pipelines.box_utils import model_boxes_to_yolo_lines
 from improved_pipelines.embedding_store import ChromaEmbeddingStore
-from improved_pipelines.inference_image import build_query_embeddings, run_inference_on_image
+from improved_pipelines.inference_image import build_query_embeddings, run_inference_on_frame, run_inference_on_image
 from improved_pipelines.object_store import ObjectStore
 from on_device_app.dto import InferenceSettings
 
@@ -82,6 +82,44 @@ class OwlVitV2Detector(ObjectDetector):
                     cy=float(cy),
                     w=float(w),
                     h=float(h),
+                    score=float(score),
+                )
+            )
+        return out
+
+    def detect_frame(self, frame_bgr: np.ndarray, settings: InferenceSettings) -> list[Detection]:
+        """Run detection on an in-memory BGR frame (no disk I/O)."""
+        embed_store = self._embedding_store_factory()
+        raw_detector = self._raw_detector_factory()
+        query_embedding, class_names = build_query_embeddings(embed_store)
+        class_ids, scores, boxes = run_inference_on_frame(
+            frame_bgr,
+            raw_detector,
+            query_embedding,
+            class_names,
+            conf_thresh=settings.conf_thresh,
+            merging_mode=settings.merging_mode,
+            avg_count=settings.avg_count,
+        )
+        class_ids = np.asarray(class_ids)
+        scores = np.asarray(scores)
+        boxes = np.asarray(boxes)
+
+        h, w = frame_bgr.shape[:2]
+        yolo_lines = model_boxes_to_yolo_lines(boxes, class_ids, w, h)
+
+        out: list[Detection] = []
+        for line, score in zip(yolo_lines, scores):
+            cid, cx, cy, bw, bh = line
+            cname = class_names[cid] if 0 <= cid < len(class_names) else str(cid)
+            out.append(
+                Detection(
+                    class_id=int(cid),
+                    class_name=cname,
+                    cx=float(cx),
+                    cy=float(cy),
+                    w=float(bw),
+                    h=float(bh),
                     score=float(score),
                 )
             )

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import argparse
-
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from on_device_app.api_client import ApiClient
 from on_device_app.qt import launch_qt

@@ -391,6 +391,35 @@ class TestRos2FrameIngest:
         )
         assert r2.json()["dedup_skipped"] == 1
 
+    def test_ingest_applies_roi_crop_and_remaps_coordinates(
+        self, client: TestClient, fake_detector: FakeDetector, sample_jpeg_bytes: bytes,
+    ):
+        fake_detector.set_detections([
+            Detection(class_id=0, class_name="bottle", cx=0.5, cy=0.5, w=0.5, h=0.5, score=0.9),
+        ])
+        params_obj = {
+            "settings": {
+                "roi_x": 0.25,
+                "roi_y": 0.25,
+                "roi_w": 0.5,
+                "roi_h": 0.5,
+            },
+            "dedup_ttl_ms": 900,
+            "dedup_quant": 0.03,
+        }
+        resp = client.post(
+            "/v1/ros2/frame",
+            content=sample_jpeg_bytes,
+            headers={"Content-Type": "image/jpeg"},
+            params={"params": json.dumps(params_obj)},
+        )
+        assert resp.status_code == 200
+        det = resp.json()["detections"][0]
+        assert det["cx"] == pytest.approx(0.5, abs=1e-6)
+        assert det["cy"] == pytest.approx(0.5, abs=1e-6)
+        assert det["w"] == pytest.approx(0.25, abs=1e-6)
+        assert det["h"] == pytest.approx(0.25, abs=1e-6)
+
 class TestStreamUpload:
     def test_upload_mp4(self, client: TestClient, sample_video_path: Path):
         with sample_video_path.open("rb") as f:
@@ -582,6 +611,9 @@ class TestDTOValidation:
         assert s.avg_count == 8
         assert s.roi_x == 0.0
         assert s.roi_w == 1.0
+        assert s.tracking_enabled is True
+        assert s.tracking_direction == "right_to_left"
+        assert s.tracking_line_x == 0.5
 
     def test_inference_settings_roi_exceeds_bounds(self):
         with pytest.raises(Exception):

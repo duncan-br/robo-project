@@ -36,6 +36,9 @@ class FakeDetector(ObjectDetector):
     def detect(self, image_path: Path, settings: InferenceSettings) -> list[Detection]:
         return list(self._detections)
 
+    def detect_frame(self, frame_bgr: np.ndarray, settings: InferenceSettings) -> list[Detection]:
+        return list(self._detections)
+
     def class_names(self) -> list[str]:
         return list(self._class_names)
 

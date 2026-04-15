@@ -4,13 +4,14 @@ __pycache__/
 .DS_Store
 
 # Local ML / data artifacts
+.env
 data/chroma_db/
 data/mlflow.db
 data/mlflow.db-wal
 data/mlflow.db-shm
 mlruns/
 dagster_storage/
-.dagster_home/*
+.dagster_home/
 .tmp_dagster_home_*/
 
 .dvc/tmp
@@ -27,3 +28,4 @@ data/chroma_db/*
 .cursor/*
 
 data/stream_uploads/*
+data/review_images/*

@@ -18,6 +18,7 @@ import numpy as np
 from improved_pipelines.review_queue import ReviewQueue
 from on_device_app.dto import DetectionDto, InferenceSettings, ReviewItemDto, StreamFrameMessage, StreamStatusDto
 from on_device_app.services.detector import Detection, ObjectDetector
+from on_device_app.services.tracking import ConveyorCrossingTracker
 
 log = logging.getLogger(__name__)
 
@@ -238,25 +239,25 @@ class Ros2TopicSource(StreamSource):
     def frames(self) -> Iterator[tuple[np.ndarray, float]]:
         try:
             import rclpy
-            from cv_bridge import CvBridge
             from rclpy.node import Node
             from sensor_msgs.msg import Image as RosImage
         except Exception as exc:  # noqa: BLE001
             raise RuntimeError(f"ROS2 dependencies missing: {exc}") from exc
 
+        from on_device_app.ros2.stream_handler import _ros_image_to_bgr
+
         q: Queue[np.ndarray] = Queue(maxsize=3)
         rclpy.init(args=None)
         node = Node("orv_backend_stream_source")
-        bridge = CvBridge()
 
         def _cb(msg: RosImage) -> None:
-            frame_bgr = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+            frame_bgr = _ros_image_to_bgr(msg)
             if q.full():
                 try:
                     q.get_nowait()
                 except Empty:
                     pass
-            q.put_nowait(np.asarray(frame_bgr).copy())
+            q.put_nowait(frame_bgr)
 
         node.create_subscription(RosImage, self._topic, _cb, self._qos_depth)
         try:
@@ -292,6 +293,7 @@ class StreamProcessor:
         self._settings_lock = threading.Lock()
         self._source_name = ""
         self._source: StreamSource | None = None
+        self._tracker = ConveyorCrossingTracker()
 
     def start(self, source: StreamSource, settings: InferenceSettings) -> None:
         self.stop()
@@ -301,12 +303,24 @@ class StreamProcessor:
             self._settings = settings
         self._stop_event.clear()
         self._metrics = _Metrics()
+        self._tracker.reset()
         self._thread = threading.Thread(target=self._run, args=(source,), daemon=True)
         self._thread.start()
 
     def update_settings(self, settings: InferenceSettings) -> None:
         with self._settings_lock:
+            prev = self._settings
             self._settings = settings
+        if prev is None:
+            return
+        if (
+            prev.tracking_enabled != settings.tracking_enabled
+            or prev.tracking_direction != settings.tracking_direction
+            or abs(prev.tracking_line_x - settings.tracking_line_x) > 1e-6
+            or abs(prev.tracking_max_match_dist - settings.tracking_max_match_dist) > 1e-6
+            or prev.tracking_max_age_ms != settings.tracking_max_age_ms
+        ):
+            self._tracker.reset()
 
     def stop(self) -> None:
         self._stop_event.set()
@@ -316,6 +330,7 @@ class StreamProcessor:
             self._thread.join(timeout=1.5)
         self._thread = None
         self._source = None
+        self._tracker.reset()
 
     def status(self) -> StreamStatusDto:
         active = self._thread is not None and self._thread.is_alive()
@@ -401,9 +416,24 @@ class StreamProcessor:
         detection_dtos: list[DetectionDto] = []
         low_items: list[ReviewItemDto] = []
 
+        detections_in_roi: list[Detection] = []
         for det in detections:
             if not self._inside_roi(det.cx, det.cy, settings):
                 continue
+            detections_in_roi.append(det)
+
+        if settings.tracking_enabled:
+            detections_for_registration = self._tracker.filter_crossings(
+                detections_in_roi,
+                line_x=settings.tracking_line_x,
+                max_match_dist=settings.tracking_max_match_dist,
+                max_age_ms=settings.tracking_max_age_ms,
+                direction=settings.tracking_direction,
+            )
+        else:
+            detections_for_registration = detections_in_roi
+
+        for det in detections_for_registration:
             confidence_level = "high" if det.score >= settings.high_conf_min else "low"
             detection_dtos.append(
                 DetectionDto(
