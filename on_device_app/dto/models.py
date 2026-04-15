@@ -17,6 +17,7 @@ class InferenceSettings(BaseModel):
     tracking_line_x: float = Field(default=0.5, ge=0.0, le=1.0)
     tracking_max_match_dist: float = Field(default=0.08, gt=0.0, le=1.0)
     tracking_max_age_ms: int = Field(default=1200, ge=50, le=30_000)
+    tracking_min_votes: int = Field(default=3, ge=1, le=25)
 
     @model_validator(mode="after")
     def validate_roi_bounds(self) -> "InferenceSettings":
@@ -36,6 +37,7 @@ class DetectionDto(BaseModel):
     h: float
     score: float
     confidence_level: str
+    track_id: int | None = None
 
 
 class ReviewItemDto(BaseModel):

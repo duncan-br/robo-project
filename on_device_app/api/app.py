@@ -84,6 +84,64 @@ def create_app(ctx: ServiceContext) -> FastAPI:
     def get_classes() -> list[str]:
         return review.class_names()
 
+    @app.delete("/v1/classes/{class_name}")
+    def delete_class(class_name: str) -> dict:
+        store = ctx.object_store()
+        embed_store = ctx.embedding_store()
+        try:
+            class_update = store.remove_class(class_name)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        deleted_embeddings = embed_store.delete_by_class_name(class_name)
+        return {
+            "status": "deleted",
+            "class_name": class_name,
+            "embeddings_deleted": int(deleted_embeddings),
+            **class_update,
+        }
+
+    @app.get("/v1/embeddings/stats")
+    def embedding_stats() -> dict:
+        embed_store = ctx.embedding_store()
+        return {
+            "count": int(embed_store.count()),
+            "class_counts": embed_store.class_counts(),
+        }
+
+    @app.delete("/v1/embeddings")
+    def clear_embeddings() -> dict:
+        embed_store = ctx.embedding_store()
+        before = int(embed_store.count())
+        embed_store.reset()
+        return {
+            "status": "cleared",
+            "embeddings_before": before,
+            "embeddings_after": int(embed_store.count()),
+        }
+
+    @app.delete("/v1/database")
+    def clear_database(clear_object_store: bool = Query(default=True)) -> dict:
+        embed_store = ctx.embedding_store()
+        store = ctx.object_store()
+        embeddings_before = int(embed_store.count())
+        embed_store.reset()
+        store_result = {"status": "skipped"}
+        if clear_object_store:
+            store_result = store.clear_all()
+
+        rq_root = Path(ctx.paths.review_queue_root)
+        if rq_root.exists():
+            shutil.rmtree(rq_root)
+        rq_root.mkdir(parents=True, exist_ok=True)
+
+        return {
+            "status": "cleared",
+            "embeddings_before": embeddings_before,
+            "embeddings_after": int(embed_store.count()),
+            "object_store": store_result,
+            "review_queue_reset": True,
+        }
+
     @app.get("/v1/review/queue", response_model=QueueListResponse)
     def list_queue(limit: int = Query(default=100, ge=1, le=1000)) -> QueueListResponse:
         items = review.list_pending()
@@ -194,6 +252,7 @@ def create_app(ctx: ServiceContext) -> FastAPI:
         tracking_line_x: float = Form(default=0.5),
         tracking_max_match_dist: float = Form(default=0.08),
         tracking_max_age_ms: int = Form(default=1200),
+        tracking_min_votes: int = Form(default=3),
     ) -> dict:
         settings = InferenceSettings(
             conf_thresh=conf_thresh,
@@ -209,6 +268,7 @@ def create_app(ctx: ServiceContext) -> FastAPI:
             tracking_line_x=tracking_line_x,
             tracking_max_match_dist=tracking_max_match_dist,
             tracking_max_age_ms=tracking_max_age_ms,
+            tracking_min_votes=tracking_min_votes,
         )
         if source == "ros2":
             stream_source = Ros2TopicSource(topic=topic or _DEFAULT_TOPIC)

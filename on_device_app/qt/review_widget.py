@@ -114,7 +114,13 @@ class ReviewWidget(QWidget):
             return
         item = self._items[self._idx]
         try:
-            self._api.confirm_review_item(str(item.get("queue_id")), name, create_if_missing=self._add_new.isChecked())
+            suggested = str(item.get("class_name_suggested") or "").strip().lower()
+            auto_create = suggested == "unknown"
+            self._api.confirm_review_item(
+                str(item.get("queue_id")),
+                name,
+                create_if_missing=(self._add_new.isChecked() or auto_create),
+            )
         except Exception as exc:
             QMessageBox.critical(self, "Confirm failed", str(exc))
             return

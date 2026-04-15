@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMessageBox,
+    QInputDialog,
     QPushButton,
     QSlider,
     QSplitter,
@@ -222,7 +223,13 @@ class _ReviewItemDialog(QDialog):
         if not queue_id:
             return
         try:
-            self._api.confirm_review_item(queue_id, name, create_if_missing=self._add_new.isChecked())
+            suggested = str(self._item.get("class_name_suggested") or "").strip().lower()
+            auto_create = suggested == "unknown"
+            self._api.confirm_review_item(
+                queue_id,
+                name,
+                create_if_missing=(self._add_new.isChecked() or auto_create),
+            )
         except Exception as exc:  # noqa: BLE001
             QMessageBox.critical(self, "Confirm failed", str(exc))
             return
@@ -304,6 +311,22 @@ class LiveInferenceWidget(QWidget):
         source_row.addWidget(start_btn)
         source_row.addWidget(stop_btn)
         layout.addLayout(source_row)
+
+        manage_row = QHBoxLayout()
+        stats_btn = QPushButton("Embedding stats")
+        stats_btn.clicked.connect(self._show_embedding_stats)
+        clear_emb_btn = QPushButton("Clear embeddings")
+        clear_emb_btn.clicked.connect(self._clear_embeddings)
+        clear_db_btn = QPushButton("Reset database")
+        clear_db_btn.clicked.connect(self._clear_database)
+        remove_class_btn = QPushButton("Delete class")
+        remove_class_btn.clicked.connect(self._delete_class)
+        manage_row.addWidget(stats_btn)
+        manage_row.addWidget(clear_emb_btn)
+        manage_row.addWidget(clear_db_btn)
+        manage_row.addWidget(remove_class_btn)
+        manage_row.addStretch(1)
+        layout.addLayout(manage_row)
 
         splitter = QSplitter(Qt.Horizontal)
         left = QWidget()
@@ -578,8 +601,10 @@ class LiveInferenceWidget(QWidget):
         self._low_list.clear()
         for item in self._low_conf_by_id.values():
             qid = str(item.get("queue_id", ""))
+            suggested = str(item.get("class_name_suggested", "unknown"))
+            prefix = "[UNKNOWN] " if suggested.lower() == "unknown" else ""
             label = (
-                f"{item.get('class_name_suggested', 'unknown')} "
+                f"{prefix}{suggested} "
                 f"(score={float(item.get('score', 0.0)):.2f}) "
                 f"id={qid[:8]}…"
             )
@@ -609,6 +634,62 @@ class LiveInferenceWidget(QWidget):
         if base.startswith("http://"):
             return base.replace("http://", "ws://", 1) + "/v1/stream/ws"
         return "ws://127.0.0.1:8000/v1/stream/ws"
+
+    def _show_embedding_stats(self) -> None:
+        try:
+            stats = self._api.embedding_stats()
+        except Exception as exc:  # noqa: BLE001
+            QMessageBox.critical(self, "Stats failed", str(exc))
+            return
+        count = int(stats.get("count", 0))
+        class_counts = stats.get("class_counts", {}) or {}
+        lines = [f"Embeddings: {count}"]
+        for cname, ccount in sorted(class_counts.items()):
+            lines.append(f"- {cname}: {ccount}")
+        QMessageBox.information(self, "Embedding stats", "\n".join(lines))
+
+    def _clear_embeddings(self) -> None:
+        choice = QMessageBox.question(
+            self,
+            "Clear embeddings",
+            "Delete all embeddings from ChromaDB?",
+        )
+        if choice != QMessageBox.Yes:
+            return
+        try:
+            self._api.clear_embeddings()
+            self._status.setText("Cleared all embeddings.")
+        except Exception as exc:  # noqa: BLE001
+            QMessageBox.critical(self, "Clear embeddings failed", str(exc))
+
+    def _clear_database(self) -> None:
+        choice = QMessageBox.question(
+            self,
+            "Reset database",
+            "Reset embeddings, classes, labels, and review queue?",
+        )
+        if choice != QMessageBox.Yes:
+            return
+        try:
+            self._api.clear_database(clear_object_store=True)
+            self._clear_low_queue()
+            self._refresh_review()
+            self._status.setText("Database reset complete.")
+        except Exception as exc:  # noqa: BLE001
+            QMessageBox.critical(self, "Reset failed", str(exc))
+
+    def _delete_class(self) -> None:
+        class_name, ok = QInputDialog.getText(self, "Delete class", "Class name:")
+        if not ok:
+            return
+        class_name = class_name.strip()
+        if not class_name:
+            return
+        try:
+            self._api.delete_class(class_name)
+            self._status.setText(f"Deleted class: {class_name}")
+        except Exception as exc:  # noqa: BLE001
+            QMessageBox.critical(self, "Delete class failed", str(exc))
 
     def closeEvent(self, event) -> None:  # noqa: N802
         self._stop_stream()

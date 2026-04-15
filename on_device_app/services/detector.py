@@ -46,11 +46,15 @@ class OwlVitV2Detector(ObjectDetector):
         self._embedding_store_factory = embedding_store_factory
         self._raw_detector_factory = raw_detector_factory
         self._object_store_factory = object_store_factory
+        self._generic_query_embedding: dict[str, list[np.ndarray]] | None = None
+        self._generic_class_names: list[str] = ["unknown"]
 
     def detect(self, image_path: Path, settings: InferenceSettings) -> list[Detection]:
         embed_store = self._embedding_store_factory()
         raw_detector = self._raw_detector_factory()
         query_embedding, class_names = build_query_embeddings(embed_store)
+        if not class_names:
+            query_embedding, class_names = self._generic_prompt_queries(raw_detector)
         class_ids, scores, boxes = run_inference_on_image(
             image_path,
             raw_detector,
@@ -74,9 +78,10 @@ class OwlVitV2Detector(ObjectDetector):
         for line, score in zip(yolo_lines, scores):
             cid, cx, cy, w, h = line
             cname = class_names[cid] if 0 <= cid < len(class_names) else str(cid)
+            cid_out = -1 if cname == "unknown" else int(cid)
             out.append(
                 Detection(
-                    class_id=int(cid),
+                    class_id=cid_out,
                     class_name=cname,
                     cx=float(cx),
                     cy=float(cy),
@@ -92,6 +97,8 @@ class OwlVitV2Detector(ObjectDetector):
         embed_store = self._embedding_store_factory()
         raw_detector = self._raw_detector_factory()
         query_embedding, class_names = build_query_embeddings(embed_store)
+        if not class_names:
+            query_embedding, class_names = self._generic_prompt_queries(raw_detector)
         class_ids, scores, boxes = run_inference_on_frame(
             frame_bgr,
             raw_detector,
@@ -112,9 +119,10 @@ class OwlVitV2Detector(ObjectDetector):
         for line, score in zip(yolo_lines, scores):
             cid, cx, cy, bw, bh = line
             cname = class_names[cid] if 0 <= cid < len(class_names) else str(cid)
+            cid_out = -1 if cname == "unknown" else int(cid)
             out.append(
                 Detection(
-                    class_id=int(cid),
+                    class_id=cid_out,
                     class_name=cname,
                     cx=float(cx),
                     cy=float(cy),
@@ -127,3 +135,13 @@ class OwlVitV2Detector(ObjectDetector):
 
     def class_names(self) -> list[str]:
         return self._object_store_factory().load_class_names()
+
+    def _generic_prompt_queries(
+        self,
+        raw_detector: ImageConditionedObjectDetector,
+    ) -> tuple[dict[str, list[np.ndarray]], list[str]]:
+        if self._generic_query_embedding is None:
+            prompt_embeddings = raw_detector.tokenize_queries(["object"])
+            vec = np.asarray(prompt_embeddings[0], dtype=np.float32)
+            self._generic_query_embedding = {"unknown": [vec]}
+        return self._generic_query_embedding, self._generic_class_names

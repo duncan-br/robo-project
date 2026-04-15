@@ -97,6 +97,39 @@ class ChromaEmbeddingStore:
             col.delete(ids=list(ids))
         return len(ids)
 
+    def delete_by_class_name(self, class_name: str) -> int:
+        """Remove all vectors whose metadata ``class_name`` matches."""
+        col = self._collection
+        res = col.get(where={"class_name": {"$eq": str(class_name)}}, include=[])
+        ids = res.get("ids") or []
+        if ids:
+            col.delete(ids=list(ids))
+        return len(ids)
+
+    def class_counts(self, batch_size: int = 1024) -> Dict[str, int]:
+        """Return embedding counts per class_name."""
+        total = self._collection.count()
+        if total <= 0:
+            return {}
+        counts: Dict[str, int] = {}
+        offset = 0
+        while offset < total:
+            batch = self._collection.get(include=["metadatas"], limit=batch_size, offset=offset)
+            ids = batch.get("ids") or []
+            metas = batch.get("metadatas") or []
+            for meta in metas:
+                if not meta:
+                    continue
+                cname = meta.get("class_name")
+                if not cname:
+                    continue
+                key = str(cname)
+                counts[key] = counts.get(key, 0) + 1
+            offset += len(ids)
+            if not ids:
+                break
+        return counts
+
     def get_embeddings_grouped_by_class_name(
         self,
         batch_size: int = 256,

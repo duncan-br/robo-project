@@ -41,7 +41,7 @@ class ObjectStore:
     def load_class_names(self) -> List[str]:
         p = self.paths.classes_file
         if not p.is_file():
-            raise FileNotFoundError(f"Missing classes file: {p}")
+            return []
         lines = p.read_text(encoding="utf-8").splitlines()
         return [
             ln.strip()
@@ -131,6 +131,92 @@ class ObjectStore:
         with self.paths.classes_file.open("a", encoding="utf-8") as f:
             f.write(name + "\n")
         return len(names)
+
+    def remove_class(self, class_name: str) -> dict[str, int]:
+        """Remove class and reindex label ids; drop annotations of the removed class."""
+        names = self.load_class_names()
+        if class_name not in names:
+            raise KeyError(f"Unknown class {class_name!r}")
+        remove_idx = int(names.index(class_name))
+        new_names = [name for i, name in enumerate(names) if i != remove_idx]
+        self._write_classes(new_names)
+
+        files_touched = 0
+        boxes_removed = 0
+        boxes_reindexed = 0
+        for label_path in sorted(self.paths.labels_dir.glob("*.txt")):
+            if not label_path.is_file():
+                continue
+            lines_out: list[str] = []
+            changed = False
+            for raw in label_path.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
+                if not line:
+                    continue
+                parts = line.split()
+                if len(parts) < 5:
+                    lines_out.append(line)
+                    continue
+                try:
+                    cid = int(parts[0])
+                except Exception:  # noqa: BLE001
+                    lines_out.append(line)
+                    continue
+                if cid == remove_idx:
+                    boxes_removed += 1
+                    changed = True
+                    continue
+                if cid > remove_idx:
+                    cid -= 1
+                    boxes_reindexed += 1
+                    changed = True
+                parts[0] = str(cid)
+                lines_out.append(" ".join(parts))
+            if changed:
+                label_path.write_text("\n".join(lines_out) + ("\n" if lines_out else ""), encoding="utf-8")
+                files_touched += 1
+        return {
+            "files_touched": files_touched,
+            "boxes_removed": boxes_removed,
+            "boxes_reindexed": boxes_reindexed,
+        }
+
+    def clear_all(self) -> dict[str, int]:
+        """Remove all images/labels/classes content and recreate empty layout."""
+        images_deleted = self._clear_dir(self.paths.images_dir)
+        labels_deleted = self._clear_dir(self.paths.labels_dir)
+        classes_deleted = 0
+        if self.paths.classes_file.exists():
+            self.paths.classes_file.unlink()
+            classes_deleted = 1
+        self.paths.images_dir.mkdir(parents=True, exist_ok=True)
+        self.paths.labels_dir.mkdir(parents=True, exist_ok=True)
+        self.paths.classes_file.write_text("", encoding="utf-8")
+        return {
+            "images_deleted": images_deleted,
+            "labels_deleted": labels_deleted,
+            "classes_file_reset": classes_deleted,
+        }
+
+    def _write_classes(self, names: list[str]) -> None:
+        payload = "\n".join(names)
+        if payload:
+            payload += "\n"
+        self.paths.classes_file.write_text(payload, encoding="utf-8")
+
+    @staticmethod
+    def _clear_dir(path: Path) -> int:
+        if not path.exists():
+            return 0
+        deleted = 0
+        for child in path.iterdir():
+            if child.is_file():
+                child.unlink()
+                deleted += 1
+            elif child.is_dir():
+                shutil.rmtree(child)
+                deleted += 1
+        return deleted
 
 
 def labeled_pairs_dataframe(store: ObjectStore, limit: Optional[int] = None) -> pd.DataFrame:

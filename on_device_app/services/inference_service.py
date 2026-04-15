@@ -98,7 +98,8 @@ class InferenceService:
                 det.class_id, det.cx, det.cy, det.w, det.h, det.score
             ):
                 continue
-            confidence_level = "high" if det.score >= settings.high_conf_min else "low"
+            has_known_class = det.class_id >= 0 and str(det.class_name).strip().lower() != "unknown"
+            confidence_level = "high" if has_known_class and det.score >= settings.high_conf_min else "low"
             detection_dtos.append(
                 DetectionDto(
                     class_id=det.class_id,
@@ -111,7 +112,7 @@ class InferenceService:
                     confidence_level=confidence_level,
                 )
             )
-            if det.score >= settings.high_conf_min:
+            if has_known_class and det.score >= settings.high_conf_min:
                 high_lines.append((det.class_id, det.cx, det.cy, det.w, det.h))
             else:
                 queue_id = str(uuid.uuid4())
@@ -202,7 +203,8 @@ class InferenceService:
                 det.class_id, det.cx, det.cy, det.w, det.h, det.score
             ):
                 continue
-            confidence_level = "high" if det.score >= settings.high_conf_min else "low"
+            has_known_class = det.class_id >= 0 and str(det.class_name).strip().lower() != "unknown"
+            confidence_level = "high" if has_known_class and det.score >= settings.high_conf_min else "low"
             detection_dtos.append(
                 DetectionDto(
                     class_id=det.class_id,
@@ -215,7 +217,7 @@ class InferenceService:
                     confidence_level=confidence_level,
                 )
             )
-            if det.score >= settings.high_conf_min:
+            if has_known_class and det.score >= settings.high_conf_min:
                 high_lines.append((det.class_id, det.cx, det.cy, det.w, det.h))
             else:
                 queue_id = str(uuid.uuid4())

@@ -33,9 +33,7 @@ def build_query_embeddings(
 ) -> Tuple[Dict[str, List[np.ndarray]], List[str]]:
     grouped = embed_store.get_embeddings_grouped_by_class_name()
     if not grouped:
-        raise ValueError(
-            "Chroma collection is empty. Run preload_embeddings or check CHROMA_PERSIST_DIR."
-        )
+        return {}, []
     class_names = sorted(grouped.keys())
     qd: Dict[str, List[np.ndarray]] = {
         cn: [np.asarray(e, dtype=np.float32) for e in grouped[cn]] for cn in class_names

@@ -21,6 +21,18 @@ class ApiClient:
     def classes(self) -> list[str]:
         return list(self._get("/v1/classes"))
 
+    def delete_class(self, class_name: str) -> dict[str, Any]:
+        return self._delete(f"/v1/classes/{class_name}")
+
+    def embedding_stats(self) -> dict[str, Any]:
+        return self._get("/v1/embeddings/stats")
+
+    def clear_embeddings(self) -> dict[str, Any]:
+        return self._delete("/v1/embeddings")
+
+    def clear_database(self, clear_object_store: bool = True) -> dict[str, Any]:
+        return self._delete("/v1/database", params={"clear_object_store": str(bool(clear_object_store)).lower()})
+
     def list_review_queue(self, limit: int = 100) -> dict[str, Any]:
         return self._get("/v1/review/queue", params={"limit": int(limit)})
 
@@ -72,6 +84,12 @@ class ApiClient:
             "roi_y": settings.roi_y,
             "roi_w": settings.roi_w,
             "roi_h": settings.roi_h,
+            "tracking_enabled": settings.tracking_enabled,
+            "tracking_direction": settings.tracking_direction,
+            "tracking_line_x": settings.tracking_line_x,
+            "tracking_max_match_dist": settings.tracking_max_match_dist,
+            "tracking_max_age_ms": settings.tracking_max_age_ms,
+            "tracking_min_votes": settings.tracking_min_votes,
         }
         return self._post_form("/v1/stream/start", data)
 
@@ -130,6 +148,15 @@ class ApiClient:
         resp = requests.post(
             self._url(path),
             data=data,
+            timeout=self.timeout_s,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def _delete(self, path: str, params: dict[str, Any] | None = None) -> Any:
+        resp = requests.delete(
+            self._url(path),
+            params=params,
             timeout=self.timeout_s,
         )
         resp.raise_for_status()

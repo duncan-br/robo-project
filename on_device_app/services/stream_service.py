@@ -18,7 +18,7 @@ import numpy as np
 from improved_pipelines.review_queue import ReviewQueue
 from on_device_app.dto import DetectionDto, InferenceSettings, ReviewItemDto, StreamFrameMessage, StreamStatusDto
 from on_device_app.services.detector import Detection, ObjectDetector
-from on_device_app.services.tracking import ConveyorCrossingTracker
+from on_device_app.services.object_tracker import ObjectTracker, TrackedObject
 
 log = logging.getLogger(__name__)
 
@@ -293,7 +293,9 @@ class StreamProcessor:
         self._settings_lock = threading.Lock()
         self._source_name = ""
         self._source: StreamSource | None = None
-        self._tracker = ConveyorCrossingTracker()
+        self._tracker = ObjectTracker(min_votes=3)
+        self._registered_high_tracks: set[int] = set()
+        self._queued_low_tracks: set[int] = set()
 
     def start(self, source: StreamSource, settings: InferenceSettings) -> None:
         self.stop()
@@ -303,7 +305,9 @@ class StreamProcessor:
             self._settings = settings
         self._stop_event.clear()
         self._metrics = _Metrics()
-        self._tracker.reset()
+        self._tracker.reset(min_votes=settings.tracking_min_votes)
+        self._registered_high_tracks.clear()
+        self._queued_low_tracks.clear()
         self._thread = threading.Thread(target=self._run, args=(source,), daemon=True)
         self._thread.start()
 
@@ -313,14 +317,10 @@ class StreamProcessor:
             self._settings = settings
         if prev is None:
             return
-        if (
-            prev.tracking_enabled != settings.tracking_enabled
-            or prev.tracking_direction != settings.tracking_direction
-            or abs(prev.tracking_line_x - settings.tracking_line_x) > 1e-6
-            or abs(prev.tracking_max_match_dist - settings.tracking_max_match_dist) > 1e-6
-            or prev.tracking_max_age_ms != settings.tracking_max_age_ms
-        ):
-            self._tracker.reset()
+        if prev.tracking_min_votes != settings.tracking_min_votes:
+            self._tracker.reset(min_votes=settings.tracking_min_votes)
+            self._registered_high_tracks.clear()
+            self._queued_low_tracks.clear()
 
     def stop(self) -> None:
         self._stop_event.set()
@@ -331,6 +331,8 @@ class StreamProcessor:
         self._thread = None
         self._source = None
         self._tracker.reset()
+        self._registered_high_tracks.clear()
+        self._queued_low_tracks.clear()
 
     def status(self) -> StreamStatusDto:
         active = self._thread is not None and self._thread.is_alive()
@@ -348,8 +350,6 @@ class StreamProcessor:
     def _run(self, source: StreamSource) -> None:
         last_tick = time.time()
         local_count = 0
-        last_detections: list[DetectionDto] = []
-        last_low_items: list[ReviewItemDto] = []
         for frame_idx, (frame_bgr, _ts) in enumerate(source.frames(), start=1):
             if self._stop_event.is_set():
                 break
@@ -358,15 +358,7 @@ class StreamProcessor:
             if settings is None:
                 continue
             run_inference = (frame_idx % _INFER_EVERY_N_FRAMES == 1)
-            message = self._process_frame(
-                frame_bgr, frame_idx, settings,
-                run_inference=run_inference,
-                cached_detections=last_detections,
-                cached_low_items=last_low_items,
-            )
-            if run_inference:
-                last_detections = message.detections
-                last_low_items = message.low_confidence_items
+            message = self._process_frame(frame_bgr, frame_idx, settings, run_inference=run_inference)
             with self._latest_lock:
                 self._latest_message = message
             self._metrics.frames_processed = frame_idx
@@ -385,58 +377,20 @@ class StreamProcessor:
         settings: InferenceSettings,
         *,
         run_inference: bool = True,
-        cached_detections: list[DetectionDto] | None = None,
-        cached_low_items: list[ReviewItemDto] | None = None,
     ) -> StreamFrameMessage:
         ok, encoded = cv2.imencode(".jpg", frame_bgr)
         b64 = base64.b64encode(encoded.tobytes()).decode("ascii") if ok else ""
 
-        if not run_inference:
-            return StreamFrameMessage(
-                frame_jpeg_b64=b64,
-                frame_index=frame_idx,
-                detections=cached_detections or [],
-                low_confidence_items=cached_low_items or [],
-                stream_fps=self._metrics.fps,
-            )
-
-        with tempfile.NamedTemporaryFile(prefix="orv_stream_", suffix=".jpg", delete=False) as tmp:
-            tmp_path = Path(tmp.name)
-        cv2.imwrite(str(tmp_path), frame_bgr)
-        try:
-            detections = self._detector.detect(tmp_path, settings)
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
-        object_store = self._object_store_factory()
-        review_queue: ReviewQueue = self._review_queue_factory()
-
-        high_yolo: list[tuple[int, float, float, float, float]] = []
-        low_payloads: list[dict] = []
         detection_dtos: list[DetectionDto] = []
         low_items: list[ReviewItemDto] = []
 
-        detections_in_roi: list[Detection] = []
-        for det in detections:
-            if not self._inside_roi(det.cx, det.cy, settings):
-                continue
-            detections_in_roi.append(det)
-
-        if settings.tracking_enabled:
-            detections_for_registration = self._tracker.filter_crossings(
-                detections_in_roi,
-                line_x=settings.tracking_line_x,
-                max_match_dist=settings.tracking_max_match_dist,
-                max_age_ms=settings.tracking_max_age_ms,
-                direction=settings.tracking_direction,
-            )
-        else:
-            detections_for_registration = detections_in_roi
-
-        for det in detections_for_registration:
-            confidence_level = "high" if det.score >= settings.high_conf_min else "low"
-            detection_dtos.append(
-                DetectionDto(
+        tracked_objects: list[TrackedObject]
+        if run_inference:
+            detections = self._infer_detections(frame_bgr, settings)
+            detections_in_roi = [det for det in detections if self._inside_roi(det.cx, det.cy, settings)]
+            tracked_objects = self._tracker.update(detections_in_roi) if settings.tracking_enabled else [
+                TrackedObject(
+                    track_id=idx + 1,
                     class_id=det.class_id,
                     class_name=det.class_name,
                     cx=det.cx,
@@ -444,63 +398,31 @@ class StreamProcessor:
                     w=det.w,
                     h=det.h,
                     score=det.score,
+                    total_votes=1,
+                    is_label_stable=(det.class_name != "unknown" and det.class_id >= 0),
+                )
+                for idx, det in enumerate(detections_in_roi)
+            ]
+        else:
+            tracked_objects = self._tracker.predict() if settings.tracking_enabled else []
+
+        for tracked in tracked_objects:
+            confidence_level = "high" if tracked.score >= settings.high_conf_min and tracked.class_id >= 0 else "low"
+            detection_dtos.append(
+                DetectionDto(
+                    class_id=tracked.class_id,
+                    class_name=tracked.class_name,
+                    cx=tracked.cx,
+                    cy=tracked.cy,
+                    w=tracked.w,
+                    h=tracked.h,
+                    score=tracked.score,
                     confidence_level=confidence_level,
+                    track_id=tracked.track_id,
                 )
             )
-            if confidence_level == "high":
-                high_yolo.append((det.class_id, det.cx, det.cy, det.w, det.h))
-            else:
-                queue_id = str(uuid.uuid4())
-                payload = {
-                    "queue_id": queue_id,
-                    "image_path": "",
-                    "cx": det.cx,
-                    "cy": det.cy,
-                    "w": det.w,
-                    "h": det.h,
-                    "score": det.score,
-                    "class_id_suggested": det.class_id,
-                    "class_name_suggested": det.class_name,
-                }
-                low_payloads.append(payload)
-                low_items.append(
-                    ReviewItemDto(
-                        queue_id=queue_id,
-                        image_path="",
-                        cx=det.cx,
-                        cy=det.cy,
-                        w=det.w,
-                        h=det.h,
-                        score=det.score,
-                        class_id_suggested=det.class_id,
-                        class_name_suggested=det.class_name,
-                    )
-                )
-
-        with tempfile.NamedTemporaryFile(prefix="orv_stream_src_", suffix=".jpg", delete=False) as tmp:
-            source_image = Path(tmp.name)
-        cv2.imwrite(str(source_image), frame_bgr)
-        try:
-            if high_yolo:
-                saved_img, _ = object_store.save_infer_result(source_image, high_yolo, stem_prefix="stream")
-                saved_path = str(Path(saved_img).resolve())
-            elif low_payloads:
-                review_dir = Path("data/review_images")
-                review_dir.mkdir(parents=True, exist_ok=True)
-                persistent = review_dir / f"review_{uuid.uuid4().hex[:12]}.jpg"
-                cv2.imwrite(str(persistent), frame_bgr)
-                saved_path = str(persistent.resolve())
-            else:
-                saved_path = ""
-
-            if low_payloads:
-                for payload in low_payloads:
-                    payload["image_path"] = saved_path
-                review_queue.append_items(low_payloads)
-                for item in low_items:
-                    item.image_path = saved_path
-        finally:
-            source_image.unlink(missing_ok=True)
+        if run_inference:
+            low_items = self._persist_track_events(frame_bgr, tracked_objects, settings)
 
         return StreamFrameMessage(
             frame_jpeg_b64=b64,
@@ -515,3 +437,96 @@ class StreamProcessor:
         max_x = settings.roi_x + settings.roi_w
         max_y = settings.roi_y + settings.roi_h
         return settings.roi_x <= cx <= max_x and settings.roi_y <= cy <= max_y
+
+    def _infer_detections(self, frame_bgr: np.ndarray, settings: InferenceSettings) -> list[Detection]:
+        with tempfile.NamedTemporaryFile(prefix="orv_stream_", suffix=".jpg", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+        cv2.imwrite(str(tmp_path), frame_bgr)
+        try:
+            return self._detector.detect(tmp_path, settings)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    def _persist_track_events(
+        self,
+        frame_bgr: np.ndarray,
+        tracked_objects: list[TrackedObject],
+        settings: InferenceSettings,
+    ) -> list[ReviewItemDto]:
+        object_store = self._object_store_factory()
+        review_queue: ReviewQueue = self._review_queue_factory()
+        high_yolo: list[tuple[int, float, float, float, float]] = []
+        low_payloads: list[dict] = []
+        low_items: list[ReviewItemDto] = []
+
+        for tracked in tracked_objects:
+            tid = int(tracked.track_id)
+            is_high = (
+                tracked.class_id >= 0
+                and tracked.class_name != "unknown"
+                and tracked.score >= settings.high_conf_min
+                and tracked.is_label_stable
+            )
+            if is_high:
+                if tid in self._registered_high_tracks:
+                    continue
+                self._registered_high_tracks.add(tid)
+                high_yolo.append((tracked.class_id, tracked.cx, tracked.cy, tracked.w, tracked.h))
+                continue
+            if tid in self._queued_low_tracks:
+                continue
+            self._queued_low_tracks.add(tid)
+            queue_id = str(uuid.uuid4())
+            payload = {
+                "queue_id": queue_id,
+                "image_path": "",
+                "cx": tracked.cx,
+                "cy": tracked.cy,
+                "w": tracked.w,
+                "h": tracked.h,
+                "score": tracked.score,
+                "class_id_suggested": tracked.class_id,
+                "class_name_suggested": tracked.class_name,
+            }
+            low_payloads.append(payload)
+            low_items.append(
+                ReviewItemDto(
+                    queue_id=queue_id,
+                    image_path="",
+                    cx=tracked.cx,
+                    cy=tracked.cy,
+                    w=tracked.w,
+                    h=tracked.h,
+                    score=tracked.score,
+                    class_id_suggested=tracked.class_id,
+                    class_name_suggested=tracked.class_name,
+                )
+            )
+
+        if not high_yolo and not low_payloads:
+            return []
+
+        with tempfile.NamedTemporaryFile(prefix="orv_stream_src_", suffix=".jpg", delete=False) as tmp:
+            source_image = Path(tmp.name)
+        cv2.imwrite(str(source_image), frame_bgr)
+        try:
+            if high_yolo:
+                saved_img, _ = object_store.save_infer_result(source_image, high_yolo, stem_prefix="stream")
+                saved_path = str(Path(saved_img).resolve())
+            else:
+                review_dir = Path("data/review_images")
+                review_dir.mkdir(parents=True, exist_ok=True)
+                persistent = review_dir / f"review_{uuid.uuid4().hex[:12]}.jpg"
+                cv2.imwrite(str(persistent), frame_bgr)
+                saved_path = str(persistent.resolve())
+
+            if low_payloads:
+                for payload in low_payloads:
+                    payload["image_path"] = saved_path
+                review_queue.append_items(low_payloads)
+                for item in low_items:
+                    item.image_path = saved_path
+        finally:
+            source_image.unlink(missing_ok=True)
+
+        return low_items
